@@ -33,7 +33,7 @@ def addMediaType():
                 
 @app.route("/mediatypes/delete", methods=["POST"])
 @cross_origin()
-def addMediaType():
+def deleteMediaType():
     if request.method == "POST" and  request.form.get("id", None) is not None:
         id = request.form.get("id", None)
         with open(MEDIA_TYPES_FILE, "r", encoding="utf-8") as f:
