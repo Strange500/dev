@@ -1,5 +1,5 @@
-from common import *
-from exceptions import *
+from mediaDB.common import *
+from mediaDB.exceptions import *
 from json import load
 
 def createMediaType(name:str, have_season:bool | None = False) -> bool:
