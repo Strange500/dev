@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 VERSION = '0.0.2'
 DESCRIPTION = 'Database to manage media'
-LONG_DESCRIPTION = ""
+LONG_DESCRIPTION = "Ensure your media are here, no double, detect missing media, and can accept any metadata providers, sources"
 
 setup(name="mediaDB",
       version=VERSION,
