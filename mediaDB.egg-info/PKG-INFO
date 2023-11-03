@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: mediaDB
+Version: 0.0.2
+Summary: Database to manage media
+Home-page: UNKNOWN
+Author: Benjamin Roget
+Author-email: benjamin.rogetpro@gmail.com
+License: UNKNOWN
+Keywords: python,media,manage
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Education
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: POSIX :: Linux 
+Classifier: Framework :: Flask 
+Classifier: License :: Free For Home Use 
+
+UNKNOWN
+
