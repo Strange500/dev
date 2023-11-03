@@ -3,6 +3,7 @@ import tmdbsimple as tmdb
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
+from mediaDB.extension.indexers.common import indexerCommon
 from json import load
 
 

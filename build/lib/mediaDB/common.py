@@ -54,7 +54,6 @@ METADONNEE_PROVIDERS_FILE = os.path.join(CONF_DIR, "setting", "MetaProviders.jso
 
 os.makedirs(VAR_DIR, exist_ok=True)
 os.makedirs(CONF_DIR, exist_ok=True)
-os.makedirs(LOGS_DIR, exist_ok=True)
 
 def forbidden_car(name):
     """
