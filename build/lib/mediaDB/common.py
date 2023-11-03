@@ -25,7 +25,7 @@ from datetime import datetime
 #     import wmi
 
 
-from flaresolver import FlareSolverrProxy
+from mediaDB.flaresolver import FlareSolverrProxy
 
 DEBUG_MODE_ENABLE = False
 

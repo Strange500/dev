@@ -8,7 +8,6 @@ mediaDB/flaresolver.py
 mediaDB/indexer.py
 mediaDB/mediaTypes.py
 mediaDB/metaProviders.py
-mediaDB/tmdb.py
 mediaDB.egg-info/PKG-INFO
 mediaDB.egg-info/SOURCES.txt
 mediaDB.egg-info/dependency_links.txt

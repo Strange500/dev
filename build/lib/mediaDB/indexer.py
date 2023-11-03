@@ -1,5 +1,5 @@
-from common import *
-from exceptions import *
+from mediaDB.common import *
+from mediaDB.exceptions import *
 
 class indexer():
 
