@@ -1,8 +1,8 @@
 import tmdbsimple as tmdb
 
 # relative imports
-from common import *
-from ...mediaTypes import *
+from mediaDB.common import *
+from mediaDB.mediaTypes import *
 from json import load
 
 

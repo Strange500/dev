@@ -1,5 +1,5 @@
 
-from ...common import *
+from mediaDB.common import *
 class indexerCommon():
 
     SETTING_DIRECTORY = os.path.join(CONF_DIR, "Indexers")

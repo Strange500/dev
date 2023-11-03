@@ -1,9 +1,9 @@
-from common import *
-from Database import *
-from flaresolver import *
-from indexer import *
-from mediaTypes import *
-from metaProviders import *
+from mediaDB.common import *
+from mediaDB.Database import *
+from mediaDB.flaresolver import *
+from mediaDB.indexer import *
+from mediaDB.mediaTypes import *
+from mediaDB.metaProviders import *
 
 from flask import Flask, jsonify, request, abort
 from flask_cors import cross_origin
