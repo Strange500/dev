@@ -6,3 +6,6 @@ from flaresolver import FlareSolverrProxy
 from indexer import indexer
 from mediaTypes import createMediaType, deleteMediaType, mediaType
 from metaProviders import MetaProviders
+from extension import indexers
+
+
