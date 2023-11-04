@@ -1,10 +1,15 @@
-
+from mediaDB.exceptions import *
 from mediaDB.common import *
 class indexerCommon():
 
+    # VARIABLES
     SETTING_DIRECTORY = os.path.join(CONF_DIR, "Indexers")
     VAR_DIRECTORY = os.path.join(VAR_DIR, "Indexers")
     PROXY = FlareSolverrProxy
+
+    # CREATING FILES & DIRECTORIES
+    os.makedirs(SETTING_DIRECTORY, exist_ok=True)
+    os.makedirs(VAR_DIRECTORY, exist_ok=True)
 
     def make_result(tmdb_id:int, media_type:int, release_date:str, last_air_date:str | None = None, adult: bool | None = None, genres: list[int] | None = None, in_production: bool | None = False, last_episode_to_air: dict | None = None, title: str | None = None, other_titles:list[str] | None = None, next_episode_to_air: dict | None = None, number_of_episodes:int | None = None, number_of_season: int | None = None, original_language:str | None = None, seasons: dict | None = None, status: str | None = None) -> dict:
         """
@@ -84,3 +89,16 @@ class indexerCommon():
             "status": status,
 
         }
+
+
+    def checkConfig(config: dict, keys: dict) -> bool:
+        for key in keys:
+            if config.get(key, None) is not None:
+                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not indexerCommon.checkConfig(config[key], keys[key]):
+                    return False
+                continue
+            else:
+                return False
+        return True
+
+    

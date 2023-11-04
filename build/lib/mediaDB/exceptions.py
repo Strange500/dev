@@ -6,3 +6,6 @@ class MediaTypeNotSupported(Exception):
 
 class MediaTypeDoesNotExist(Exception):
     "Raised if the media type is not initialsed"
+
+class ProviderConfigError(Exception):
+    "Raised if a config file is not initialised"

@@ -1,4 +1,4 @@
-
+from mediaDB.exceptions import *
 from mediaDB.common import *
 class indexerCommon():
 
@@ -84,3 +84,16 @@ class indexerCommon():
             "status": status,
 
         }
+
+
+    def checkConfig(config: dict, keys: dict) -> bool:
+        for key in keys:
+            if config.get(key, None) is not None:
+                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not indexerCommon.checkConfig(config[key], keys[key]):
+                    return False
+                continue
+            else:
+                return False
+        return True
+
+    

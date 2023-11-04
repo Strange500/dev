@@ -1,59 +1,42 @@
-# import ctypes
-# import datetime
-# import json
 import os
-import platform
-# import shutil
 import socket
-# import time
-from typing import Dict, Union
-from urllib.parse import urlparse, quote
 import appdirs
-# import requests
 from urllib.parse import urlparse
-# import tmdbsimple as tmdb
-# from thefuzz import process
-# import re
+import validators
 from copy import deepcopy
-
 import requests
 from json import dump
 from datetime import datetime
-# if platform.system() == "Linux":
-#     import psutil
-# elif platform.system() == "Windows":
-#     import wmi
 
-
+# local imports
 from mediaDB.flaresolver import FlareSolverrProxy
 
-DEBUG_MODE_ENABLE = False
 
+DEBUG_MODE_ENABLE = False
 hostname = socket.gethostname()
 IP = socket.gethostbyname(hostname)
-
 APP_NAME = "Media-Manager"
 APP_AUTHOR = "Strange500"
 
 VAR_DIR = appdirs.user_cache_dir(appname=APP_NAME, appauthor=APP_AUTHOR)
 CONF_DIR = appdirs.user_config_dir(appname=APP_NAME, appauthor=APP_AUTHOR)
+SETTINGS_DIR = os.path.join(CONF_DIR, "setting")
 
 
-BAN_IDs_FILE = os.path.join(CONF_DIR, "settings", "list_ban_id.list")
-MEDIA_TYPES_FILE = os.path.join(CONF_DIR, "setting", "MediaTypes.json")
-INDEXERS_FILE = os.path.join(CONF_DIR, "setting", "Indexers.json")
-METADONNEE_PROVIDERS_FILE = os.path.join(CONF_DIR, "setting", "MetaProviders.json")
-
-
-
-
-
-
-
-
+GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL = os.path.join(SETTINGS_DIR, "COMMON"),""
+TMDB_MOVIE_BAN_FILE = os.path.join(SETTINGS_DIR, "banned_movies.list"), ""
+TMDB_TV_BAN_FILE = os.path.join(SETTINGS_DIR, "banned_tv.list")
+INDEXERS_FILE, __INDEXERS_URL = os.path.join(SETTINGS_DIR,"Indexers.json"), ""
+METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL = os.path.join(SETTINGS_DIR, "MetaProviders.json"), ""
 
 os.makedirs(VAR_DIR, exist_ok=True)
 os.makedirs(CONF_DIR, exist_ok=True)
+os.makedirs(SETTINGS_DIR, exist_ok=True)
+
+for file, url in [(GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL), (TMDB_MOVIE_BAN_FILE, ""), (TMDB_TV_BAN_FILE, ""),
+                  (INDEXERS_FILE, __INDEXERS_URL), (METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL)]:
+    if not os.path.isfile(file) and validators.url(url):
+        wget(file)
 
 def forbidden_car(name):
     """
@@ -146,7 +129,25 @@ def is_date_valid(date_string, format='%Y-%m-%d'):
     
 def save_json(f, obj: dict):
     dump(obj, f, indent=5)
+
+
         
+def create_config_file(file_path:str, content: str):
+    with open(file_path, "w") as f:
+        f.write(file_path)
+
+def wget(url: str, save_path: str) -> bool:
+    try:
+        response = requests.get(url)
+    except requests.RequestException:
+        return False
+    try:
+        with open(save_path, "wb") as f:
+            f.write(bytes(response.content))
+    except IOError:
+        return False
+    return True
+
 if __name__ == '__main__':
     from pprint import pprint
     pprint(parseConfig("test.pyc"))
