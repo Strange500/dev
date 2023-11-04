@@ -1,4 +1,5 @@
 from mediaDB.common import *
+from mediaDB.settings import *
 from mediaDB.Database import *
 from mediaDB.flaresolver import *
 from mediaDB.indexer import *

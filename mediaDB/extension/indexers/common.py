@@ -1,5 +1,6 @@
 from mediaDB.exceptions import *
 from mediaDB.common import *
+from mediaDB.settings import *
 class indexerCommon():
 
     # VARIABLES

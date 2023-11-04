@@ -5,7 +5,7 @@ from os.path import isfile
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
 from mediaDB.extension.indexers.common import indexerCommon
-
+from mediaDB.settings import *
 
 class TMDB_manipulator(indexerCommon):
     NAME:str
@@ -34,7 +34,7 @@ class TMDB_manipulator(indexerCommon):
         raise ProviderConfigError
     
     # SETTING UP 
-
+    print(SETTING_FILE)
     CONFIG = parseConfig(SETTING_FILE)
     if not indexerCommon.checkConfig(CONFIG, {"api_key": 1, "timeout": 1}):
         raise ProviderConfigError

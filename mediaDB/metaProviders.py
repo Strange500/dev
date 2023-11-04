@@ -1,4 +1,5 @@
 from mediaDB.common import *
+from mediaDB.settings import *
 from mediaDB.exceptions import *
 from thefuzz import process
 
