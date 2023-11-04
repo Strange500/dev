@@ -1,0 +1,38 @@
+{
+     "1": {
+          "name": "Movies",
+          "have_season": false,
+          "only_sound": false,
+          "readable": false
+     },
+     "2": {
+          "name": "Music",
+          "have_season": false,
+          "only_sound": true,
+          "readable": false
+     },
+     "3": {
+          "name": "Shows",
+          "have_season": true,
+          "only_sound": false,
+          "readable": false
+     },
+     "4": {
+          "name": "Books",
+          "have_season": false,
+          "only_sound": false,
+          "readable": true
+     },
+     "5": {
+          "name": "Photos",
+          "have_season": false,
+          "only_sound": false,
+          "readable": false
+     },
+     "6": {
+          "name": "Clip",
+          "have_season": false,
+          "only_sound": false,
+          "readable": false
+     }
+}
