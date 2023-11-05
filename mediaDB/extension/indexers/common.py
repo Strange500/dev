@@ -1,7 +1,7 @@
 from mediaDB.exceptions import *
 from mediaDB.common import *
 from mediaDB.settings import *
-class indexerCommon():
+class ProviderCommon():
 
     # VARIABLES
     SETTING_DIRECTORY = os.path.join(CONF_DIR, "Indexers")
@@ -12,7 +12,7 @@ class indexerCommon():
     os.makedirs(SETTING_DIRECTORY, exist_ok=True)
     os.makedirs(VAR_DIRECTORY, exist_ok=True)
 
-    def make_result(tmdb_id:int, media_type:int, release_date:str, last_air_date:str | None = None, adult: bool | None = None, genres: list[int] | None = None, in_production: bool | None = False, last_episode_to_air: dict | None = None, title: str | None = None, other_titles:list[str] | None = None, next_episode_to_air: dict | None = None, number_of_episodes:int | None = None, number_of_season: int | None = None, original_language:str | None = None, seasons: dict | None = None, status: str | None = None) -> dict:
+    def make_result(tmdb_id:int, media_type:int, release_date:str, last_air_date:str | None = None, adult: bool | None = None, genres: list[int] | None = None, in_production: bool | None = False, last_episode_to_air: dict | None = None, title: str | None = None, other_titles:list[str] | None = None, next_episode_to_air: dict | None = None, number_of_episodes:int | None = None, number_of_season: int | None = None, original_language:str | None = None, seasons: dict | None = None, status: str | None = None, **kwargs) -> dict:
         """
         Normalize data, in order to be used by metaProvider.py
         {
@@ -70,7 +70,14 @@ class indexerCommon():
         for ids in genres:
             if not isinstance(ids, int):
                 raise ValueError("method make_result: genre ids must be int")
+            
+        if not isinstance(tmdb_id, int):
+            raise ValueError("method make_results: tmdb_id has to be int")
 
+        if not isinstance(in_production, bool):
+            raise ValueError("method make_results: in_production has to be bool")
+        
+        
         result = {
             "adult": adult,
             "release_date": release_date,
@@ -90,12 +97,13 @@ class indexerCommon():
             "status": status,
 
         }
+        return result
 
 
     def checkConfig(config: dict, keys: dict) -> bool:
         for key in keys:
             if config.get(key, None) is not None:
-                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not indexerCommon.checkConfig(config[key], keys[key]):
+                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not ProviderCommon.checkConfig(config[key], keys[key]):
                     return False
                 continue
             else:

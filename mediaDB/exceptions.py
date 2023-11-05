@@ -15,3 +15,12 @@ class MediaTypesFilesDoesNotExist(Exception):
 
 class ProviderConfigError(Exception):
     "Raised if a config file is not initialised"
+
+class TMDBError(Exception):
+    "Raised if a error occured in tmdb manipulator"
+
+class IdDoesNotExist(TMDBError):
+    "Raised if you try to acess an tmdb id that doesn't exist"
+
+class MalformedTMDBInfo(TMDBError):
+    "Raised is tmdb_info does not have the required keys"

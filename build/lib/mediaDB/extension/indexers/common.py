@@ -1,6 +1,6 @@
 from mediaDB.exceptions import *
 from mediaDB.common import *
-class indexerCommon():
+class ProviderCommon():
 
     SETTING_DIRECTORY = os.path.join(CONF_DIR, "Indexers")
     VAR_DIRECTORY = os.path.join(VAR_DIR, "Indexers")
@@ -89,7 +89,7 @@ class indexerCommon():
     def checkConfig(config: dict, keys: dict) -> bool:
         for key in keys:
             if config.get(key, None) is not None:
-                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not indexerCommon.checkConfig(config[key], keys[key]):
+                if isinstance(config.get(key), dict) and isinstance(keys.get(key, None), dict) and not ProviderCommon.checkConfig(config[key], keys[key]):
                     return False
                 continue
             else:

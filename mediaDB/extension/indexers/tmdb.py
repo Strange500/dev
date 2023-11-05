@@ -1,29 +1,38 @@
 import tmdbsimple as tmdb
 from json import load
 from os.path import isfile
+from datetime import datetime
+from thefuzz import process
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
-from mediaDB.extension.indexers.common import indexerCommon
+from mediaDB.extension.indexers.common import ProviderCommon
 from mediaDB.settings import *
 
-class TMDB_manipulator(indexerCommon):
+class TMDB_manipulator(ProviderCommon):
     NAME:str
     SETTING_FILE: str
     CONFIG: dict
     API_KEY:str
     GENRE_MOVIE_FILE:str
     GENRE_TV_FILE:str
+    IDS_MOVIE: dict
+    IDS_TV: dict
 
     # VARIABLES
-
+    __DATE = datetime.now().strftime("%m_%d_%Y")
     NAME = "TMDB"
     CONFIG_EXEMPLE_URL = "https://raw.githubusercontent.com/Strange500/mediaDB/main/exemples/TMDB"
-    SETTING_FILE = os.path.join(indexerCommon.SETTING_DIRECTORY, NAME)
-    VAR_DIRECTORY = os.path.join(indexerCommon.VAR_DIRECTORY, NAME)
+    SETTING_FILE = os.path.join(ProviderCommon.SETTING_DIRECTORY, NAME)
+    VAR_DIRECTORY = os.path.join(ProviderCommon.VAR_DIRECTORY, NAME)
     CACHE_DIRECTORY = os.path.join(VAR_DIRECTORY, "cache")
     GENRE_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "genre_movie.json")
     GENRE_TV_FILE = os.path.join(CACHE_DIRECTORY, "genre_tv.json")
+    TMDB_EXPORT_URL = "https://files.tmdb.org/p/exports/"
+    IDS_TV_FILE = os.path.join(CACHE_DIRECTORY, "tv_ids.json")
+    IDS_TV_URL = f"{TMDB_EXPORT_URL}tv_series_ids_{__DATE}.json.gz"
+    IDS_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "movies_ids.json")
+    IDS_MOVIES_URL = f"{TMDB_EXPORT_URL}movie_ids_{__DATE}.json.gz"
 
     # CREATE NEEDED FILES & DIRECTORY
 
@@ -34,9 +43,8 @@ class TMDB_manipulator(indexerCommon):
         raise ProviderConfigError
     
     # SETTING UP 
-    print(SETTING_FILE)
     CONFIG = parseConfig(SETTING_FILE)
-    if not indexerCommon.checkConfig(CONFIG, {"api_key": 1, "timeout": 1}):
+    if not ProviderCommon.checkConfig(CONFIG, {"api_key": 1, "timeout": 1}):
         raise ProviderConfigError
     API_KEY = CONFIG["api_key"]
     tmdb.API_KEY = API_KEY[0]
@@ -54,6 +62,22 @@ class TMDB_manipulator(indexerCommon):
     with open(GENRE_TV_FILE, "r") as f:
         TV_GENRE_IDS = load(f)
 
+        # update ids files
+    if not isfile(IDS_MOVIE_FILE) :
+        if wget(IDS_MOVIES_URL, IDS_MOVIE_FILE+".gz"):
+            gzExtract(IDS_MOVIE_FILE+".gz", IDS_MOVIE_FILE) 
+            makeIdsFile(IDS_MOVIE_FILE)
+    if not isfile(IDS_TV_FILE) :
+        if wget(IDS_TV_URL, IDS_TV_FILE+".gz"):
+            gzExtract(IDS_TV_FILE+".gz", IDS_TV_FILE)    
+            makeIdsFile(IDS_TV_FILE)
+
+        # loads ids
+    with open(IDS_MOVIE_FILE, "r", encoding="utf-8") as f:
+        IDS_MOVIE = load(f)
+    with open(IDS_TV_FILE, "r", encoding="utf-8") as f:
+        IDS_TV = load(f)
+
 
     def genreExist(self, id:int, media_type:int):
         m, id_list = mediaType(media_type), None
@@ -62,11 +86,201 @@ class TMDB_manipulator(indexerCommon):
         else:
             id_list = self.MOVIE_GENRE_IDS
         return id in [genre["id"] for genre in id_list["genres"]]
+    
+    def movieIdExist(self, id:int) -> bool:
+        return self.IDS_MOVIE.get(f"{id}", None) is not None
+    
+    def tvIdExist(self, id:int) -> bool:
+        return self.IDS_TV.get(f"{id}", None) is not None
 
+    def getTitleTV(self, id: int) -> str:
+        if self.tvIdExist(id):
+            return self.IDS_TV[f"{id}"]
+        
+    def getTitleMovie(self, id: int) -> str:
+        if self.movieIdExist(id):
+            return self.IDS_MOVIE[f"{id}"]
+        
+    def findIdTV(self, title: str) -> int:
+        titles = {self.IDS_TV[id]: id for id in self.IDS_TV}
+        best, score = process.extractOne(title, [*titles])
+        if score > 90:
+            return int(titles[best])
+        else:
+            p = tmdb.Search()
+            results_stat = p.tv(query=title)
+            if results_stat["total_results"] > 0:
+                return int(results_stat["results"][0]["id"])
+            return -1
+    
+    def findIdMovie(self, title: str) -> int:
+        titles = {self.IDS_MOVIE[id]: id for id in self.IDS_MOVIE}
+        best, score = process.extractOne(title, [*titles])
+        if score > 90:
+            return int(titles[best])
+        else:
+            p = tmdb.Search()
+            results_stat = p.movie(query=title)
+            if results_stat["total_results"] > 0:
+                return int(results_stat["results"][0]["id"])
+            return -1
+        
+    def __make_seasons(self, info_tmdb:dict):
+        id = info_tmdb["id"]
+        if not self.tvIdExist(id):
+            raise IdDoesNotExist(f"method __make_seasons: {id} does not exist")
+        episode_group_id = [i for i in tmdb.TV(id).episode_groups()["results"] if i["name"] == "Seasons"]
+        if episode_group_id == []:
+            new_dic = {"seasons" : {}}
+            season_data = info_tmdb["seasons"]
+            for seasons in range(len(info_tmdb["seasons"])):
+                air_date = season_data[seasons]["air_date"]
+                episode_count = season_data[seasons]["episode_count"]
+                episodes = [i for i in range(1, episode_count+1)]
+                name = season_data[seasons]["name"]
+                season_number = season_data[seasons]["season_number"]
+                new_dic["seasons"][f"{season_number}"] = {
+                            "air_date": air_date,
+                            "episode_count": episode_count,
+                            "name": name,
+                            "episodes_list": episodes
+                    }
+            info_tmdb["number_of_season"] = len(new_dic["seasons"])
+            info_tmdb["seasons"] = new_dic["seasons"]
+            return info_tmdb
+        episode_group_id = episode_group_id[0]["id"]
+        new_dic = {"seasons" : {}}
+        info = tmdb.TV_Episode_Groups(id=episode_group_id).info()['groups']
+        for seasons in range(len(info)):
+            air_date = info[seasons]['episodes'][0]["air_date"]
+            episode_count = len(info[seasons]['episodes'])
+            episodes = [ep_data["episode_number"] for ep_data in info[seasons]['episodes'] if ep_data.get("episode_number") is not None]
+            name = info[seasons]["name"]
+            season_number = info[seasons]["order"]
+            new_dic["seasons"][f"{season_number}"] = {
+                        "air_date": air_date,
+                        "episode_count": episode_count,
+                        "name": name,
+                        "episodes_list": episodes
+                }
+        info_tmdb["number_of_season"] = len(info)
+        info_tmdb["seasons"] = new_dic["seasons"]
+        return info_tmdb
+    
+    def __make_alter_titles(self, info_tmdb: dict) -> dict:
+        if info_tmdb.get("translations", None) is None:
+            return info_tmdb
+        try:
+            langs_data = {lang["english_name"]: lang["data"]["name"] for lang in info_tmdb["translations"]["translations"]}
+
+        except KeyError:
+            langs_data = {lang["english_name"]: lang["data"]["title"] for lang in info_tmdb["translations"]["translations"]}
+
+
+        alternative_titles = []
+        for keys in langs_data:
+            title = langs_data[keys]
+            if is_latin(title) and title != '':
+                alternative_titles.append(title)
+        if info_tmdb.get("name", None) is not None and is_latin(info_tmdb.get("name")) :
+            alternative_titles.append(info_tmdb.get("name", ""))
+        if info_tmdb.get("original_name", None) is not None and is_latin(info_tmdb.get("original_name")) :
+            alternative_titles.append(info_tmdb.get("original_name", ""))
+        info_tmdb["other_titles"] = list(set(alternative_titles))
+        return info_tmdb
+        
+    def __make_release_date(self, tmdb_info: dict) -> dict:
+        if tmdb_info.get("release_date", None) is None:
+            tmdb_info["release_date"] = tmdb_info["first_air_date"]
+        return tmdb_info
+    
+    def __make_genres(self, tmdb_info: dict) -> dict:
+        tmdb_info["genres"] = [genre_data["id"] for genre_data in tmdb_info["genres"]]
+        return tmdb_info
+    
+    def __make_tmdb_id(self, tmdb_info: dict) -> dict:
+        tmdb_info["tmdb_id"] = tmdb_info["id"]
+        return tmdb_info
+
+    def __make_last_episode_to_air(self, tmdb_info:dict) -> dict:
+        if tmdb_info.get("last_episode_to_air", None) is None:
+            tmdb_info["last_episode_to_air"] = None
+            return tmdb_info
+        else:
+            ep_info = tmdb_info["last_episode_to_air"]
+            tmdb_info["last_episode_to_air"] = {
+                "air_date" : ep_info["air_date"],
+                "episode_number": ep_info["episode_number"],
+                "season_number": ep_info["season_number"]
+            }
+            return tmdb_info
+        
+    def __make_next_episode_to_air(self, tmdb_info:dict) -> dict:
+        if tmdb_info.get("next_episode_to_air", None) is None:
+            tmdb_info["next_episode_to_air"] = None
+            return tmdb_info
+        else:
+            ep_info = tmdb_info["next_episode_to_air"]
+            tmdb_info["next_episode_to_air"] = {
+                "air_date" : ep_info["air_date"],
+                "episode_number": ep_info["episode_number"],
+                "season_number": ep_info["season_number"]
+            }
+            return tmdb_info
+        
+    def __make_title(self, tmdb_info:dict)-> dict:
+        if tmdb_info.get("title", None) is not None:
+            return tmdb_info
+        elif tmdb_info.get("name", None) is not None:
+            tmdb_info["title"] = tmdb_info["name"]
+            return tmdb_info
+        else:
+            raise MalformedTMDBInfo
+    
+    def getTVInfo(self, id: int) -> dict:
+        if not self.tvIdExist(id):
+            raise IdDoesNotExist(f"method getTVInfo: {id} does not exist")
+        info = tmdb.tv.TV(id).info(append_to_response="seasons,translations")
+        info = self.__make_seasons(info)
+        info = self.__make_alter_titles(info)
+        info = self.__make_genres(info)
+        info = self.__make_last_episode_to_air(info)
+        info = self.__make_release_date(info)
+        info = self.__make_title(info)
+        info = self.__make_tmdb_id(info)
+        info = self.__make_next_episode_to_air(info)
+        info["media_type"] = 3
+        if info.get("status", None) is None:
+            info["status"] = "Ended"
+        return info
+    
+    def getMovieInfo(self, id: int) -> dict:
+        if not self.movieIdExist(id):
+            raise IdDoesNotExist(f"method getMovieInfo: {id} does not exist")
+        info = tmdb.movies.Movies(id).info(append_to_response="translations")
+        info = self.__make_alter_titles(info)
+        info = self.__make_genres(info)
+        info = self.__make_last_episode_to_air(info)
+        info = self.__make_release_date(info)
+        info = self.__make_title(info)
+        info = self.__make_tmdb_id(info)
+        info = self.__make_next_episode_to_air(info)
+        info["seasons"] = None
+        info["media_type"] = 1
+        if info.get("status", None) is None:
+            info["status"] = "Ended"
+        return info
 
     def get(id:int, media_type:int) -> dict:
         if not isinstance(id, int):
             raise ValueError("method get: id must be int")
+        if media_type == 1:
+            return ProviderCommon.make_result(**TMDB_manipulator().getMovieInfo(id))
+        if media_type == 3:
+            return ProviderCommon.make_result(**TMDB_manipulator().getTVInfo(id))
+        
+
+    
         
         
 

@@ -3,9 +3,12 @@ import socket
 import appdirs
 from urllib.parse import urlparse
 import validators
+import gzip
+import shutil
 from copy import deepcopy
 import requests
-from json import dump
+import re
+from json import dump, load, loads, JSONDecodeError
 from datetime import datetime
 
 # local imports
@@ -121,6 +124,34 @@ def wget(url: str, save_path: str) -> bool:
     except IOError:
         return False
     return True
+
+def gzExtract(gz_file:str, file_name:str):
+    with gzip.open(gz_file, 'rb') as f_in:
+        with open(file_name, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+def makeIdsFile(path:str):
+    dic = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for lines in f:
+            try:
+                js = loads(lines)
+            except JSONDecodeError:
+                continue
+            if js.get("id", None) is None:
+                continue
+            if js.get("original_title", None) is None and js.get("original_name", None) is None:
+                continue
+            try:
+                dic[js["id"]] = js["original_title"]
+            except KeyError:
+                dic[js["id"]] = js["original_name"]
+    with open(path, "w") as f:
+        dump(dic, f, indent=5)
+
+def is_latin(chaine):
+    motif = re.compile(r'[^a-zA-ZÀ-ÿ\s!@#$%^&*()_\-+=\[\]{};:\'",.<>/?\\|`~]+')
+    return not motif.search(chaine)
 
 if __name__ == '__main__':
     from pprint import pprint

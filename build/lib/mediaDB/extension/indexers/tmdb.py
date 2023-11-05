@@ -4,10 +4,10 @@ from os.path import isfile
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
-from mediaDB.extension.indexers.common import indexerCommon
+from mediaDB.extension.indexers.common import ProviderCommon
 
 
-class TMDB_manipulator(indexerCommon):
+class TMDB_manipulator(ProviderCommon):
     NAME:str
     SETTING_FILE: str
     CONFIG: dict
@@ -17,15 +17,15 @@ class TMDB_manipulator(indexerCommon):
 
     NAME = "TMDB"
     CONFIG_EXEMPLE_URL = "https://raw.githubusercontent.com/Strange500/mediaDB/main/exemples/TMDB"
-    SETTING_FILE = os.path.join(indexerCommon.SETTING_DIRECTORY, NAME)
-    VAR_DIRECTORY = os.path.join(indexerCommon.VAR_DIRECTORY, NAME)
+    SETTING_FILE = os.path.join(ProviderCommon.SETTING_DIRECTORY, NAME)
+    VAR_DIRECTORY = os.path.join(ProviderCommon.VAR_DIRECTORY, NAME)
     CACHE_DIRECTORY = os.path.join(VAR_DIRECTORY, "cache")
     GENRE_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "genre_movie.json")
     GENRE_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "genre_tv.json")
     if not isfile(SETTING_FILE) and not wget(CONFIG_EXEMPLE_URL, SETTING_FILE):
         raise ProviderConfigError
     CONFIG = parseConfig(SETTING_FILE)
-    if not indexerCommon.checkConfig(CONFIG, {"api_key": 1, "timeout": 1}):
+    if not ProviderCommon.checkConfig(CONFIG, {"api_key": 1, "timeout": 1}):
         raise ProviderConfigError
     API_KEY = CONFIG["api_key"]
 
