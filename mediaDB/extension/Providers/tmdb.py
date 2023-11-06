@@ -6,7 +6,7 @@ from thefuzz import process
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
-from mediaDB.extension.indexers.common import ProviderCommon
+from mediaDB.extension.Providers.common import ProviderCommon
 from mediaDB.settings import *
 
 class TMDB_manipulator(ProviderCommon):
@@ -33,6 +33,7 @@ class TMDB_manipulator(ProviderCommon):
     IDS_TV_URL = f"{TMDB_EXPORT_URL}tv_series_ids_{__DATE}.json.gz"
     IDS_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "movies_ids.json")
     IDS_MOVIES_URL = f"{TMDB_EXPORT_URL}movie_ids_{__DATE}.json.gz"
+    media_types = [1, 3]
 
     # CREATE NEEDED FILES & DIRECTORY
 
@@ -125,6 +126,13 @@ class TMDB_manipulator(ProviderCommon):
                 return int(results_stat["results"][0]["id"])
             return -1
         
+    def findTVByTitle(self, title: str) -> list[int]:
+        return [info["id"] for info in tmdb.Search().tv(query=title)["results"] if info.get("id", None) is not None]
+    
+    def findMovieByTitle(self,title: str) -> list[int]:
+        #print(tmdb.Search().movie(query=title) )
+        return [info["id"] for info in tmdb.Search().movie(query=title)["results"] if info.get("id", None) is not None]
+        
     def __make_seasons(self, info_tmdb:dict):
         id = info_tmdb["id"]
         if not self.tvIdExist(id):
@@ -168,30 +176,24 @@ class TMDB_manipulator(ProviderCommon):
         return info_tmdb
     
     def __make_alter_titles(self, info_tmdb: dict) -> dict:
-        if info_tmdb.get("translations", None) is None:
-            return info_tmdb
-        try:
-            langs_data = {lang["english_name"]: lang["data"]["name"] for lang in info_tmdb["translations"]["translations"]}
-
-        except KeyError:
-            langs_data = {lang["english_name"]: lang["data"]["title"] for lang in info_tmdb["translations"]["translations"]}
-
-
-        alternative_titles = []
-        for keys in langs_data:
-            title = langs_data[keys]
+        alter = tmdb.tv.TV(info_tmdb['id']).alternative_titles()["results"]
+        result = []
+        for dic in alter:
+            title = dic["title"]
             if is_latin(title) and title != '':
-                alternative_titles.append(title)
+                result.append(title)
         if info_tmdb.get("name", None) is not None and is_latin(info_tmdb.get("name")) :
-            alternative_titles.append(info_tmdb.get("name", ""))
+            result.append(info_tmdb.get("name", ""))
         if info_tmdb.get("original_name", None) is not None and is_latin(info_tmdb.get("original_name")) :
-            alternative_titles.append(info_tmdb.get("original_name", ""))
-        info_tmdb["other_titles"] = list(set(alternative_titles))
+            result.append(info_tmdb.get("original_name", ""))
+        info_tmdb["other_titles"] = list(set(result))
         return info_tmdb
         
     def __make_release_date(self, tmdb_info: dict) -> dict:
         if tmdb_info.get("release_date", None) is None:
             tmdb_info["release_date"] = tmdb_info["first_air_date"]
+        else :
+            tmdb_info["release_date"] = "2004-08-12"
         return tmdb_info
     
     def __make_genres(self, tmdb_info: dict) -> dict:
@@ -236,11 +238,8 @@ class TMDB_manipulator(ProviderCommon):
             return tmdb_info
         else:
             raise MalformedTMDBInfo
-    
-    def getTVInfo(self, id: int) -> dict:
-        if not self.tvIdExist(id):
-            raise IdDoesNotExist(f"method getTVInfo: {id} does not exist")
-        info = tmdb.tv.TV(id).info(append_to_response="seasons,translations")
+        
+    def __formatTV_info(self, info:dict) -> dict:
         info = self.__make_seasons(info)
         info = self.__make_alter_titles(info)
         info = self.__make_genres(info)
@@ -254,10 +253,8 @@ class TMDB_manipulator(ProviderCommon):
             info["status"] = "Ended"
         return info
     
-    def getMovieInfo(self, id: int) -> dict:
-        if not self.movieIdExist(id):
-            raise IdDoesNotExist(f"method getMovieInfo: {id} does not exist")
-        info = tmdb.movies.Movies(id).info(append_to_response="translations")
+    def __formatMovieInfo(self, info: dict) -> dict:
+        info["media_type"] = 1
         info = self.__make_alter_titles(info)
         info = self.__make_genres(info)
         info = self.__make_last_episode_to_air(info)
@@ -271,13 +268,42 @@ class TMDB_manipulator(ProviderCommon):
             info["status"] = "Ended"
         return info
 
-    def get(id:int, media_type:int) -> dict:
+    
+    def __getTVInfo(self, id: int) -> dict:
+        if not self.tvIdExist(id):
+            raise IdDoesNotExist(f"method getTVInfo: {id} does not exist")
+        info = tmdb.tv.TV(id).info(append_to_response="seasons,translations")
+        info = self.__formatTV_info(info)
+        return info
+    
+    def __getMovieInfo(self, id: int) -> dict:
+        if not self.movieIdExist(id):
+            raise IdDoesNotExist(f"method getMovieInfo: {id} does not exist")
+        info = tmdb.movies.Movies(id).info(append_to_response="translations")
+        info = self.__formatMovieInfo(info)
+        return info
+
+    def get(self, id:int, media_type:int) -> dict:
+        #print(id, media_type)
         if not isinstance(id, int):
             raise ValueError("method get: id must be int")
         if media_type == 1:
-            return ProviderCommon.make_result(**TMDB_manipulator().getMovieInfo(id))
+            return ProviderCommon.make_result(**self.__getMovieInfo(id))
         if media_type == 3:
-            return ProviderCommon.make_result(**TMDB_manipulator().getTVInfo(id))
+            return ProviderCommon.make_result(**self.__getTVInfo(id))
+        
+    def find(self, title:int, media_type:int) -> dict:
+        if not isinstance(title, str):
+            raise ValueError("method get: tile must be str")
+        result = []
+        if media_type == 1:
+            for ids in self.findMovieByTitle(title=title):
+                result.append(ProviderCommon.make_result(**self.__getMovieInfo(ids)))
+        elif media_type == 3:
+            for ids in self.findTVByTitle(title=title):
+                result.append(ProviderCommon.make_result(**self.__getTVInfo(ids)))
+
+        return result
         
 
     

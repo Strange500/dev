@@ -150,4 +150,4 @@ def wget(url: str, save_path: str) -> bool:
 
 if __name__ == '__main__':
     from pprint import pprint
-    pprint(parseConfig("test.pyc"))
+    p#print(parseConfig("test.pyc"))

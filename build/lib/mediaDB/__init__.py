@@ -6,6 +6,6 @@ from mediaDB.flaresolver import FlareSolverrProxy
 from mediaDB.indexer import indexer
 from mediaDB.mediaTypes import createMediaType, deleteMediaType, mediaType
 from mediaDB.metaProviders import MetaProviders
-from mediaDB.extension import indexers
+from mediaDB.extension import Providers
 
 

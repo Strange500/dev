@@ -30,8 +30,8 @@ os.makedirs(SETTINGS_DIR, exist_ok=True)
 for couple in [(GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL), (TMDB_MOVIE_BAN_FILE, ""), (TMDB_TV_BAN_FILE, ""),
                   (INDEXERS_FILE, __INDEXERS_URL), (METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL)]:
     file, url = couple
-    print(file)
-    print(url)
+    #print(file)
+    #print(url)
     if not os.path.isfile(file) and validators.url(url):
         wget(url, file)
     else:

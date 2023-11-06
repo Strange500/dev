@@ -4,7 +4,7 @@ from os.path import isfile
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
-from mediaDB.extension.indexers.common import ProviderCommon
+from mediaDB.extension.Providers.common import ProviderCommon
 
 
 class TMDB_manipulator(ProviderCommon):
