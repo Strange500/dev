@@ -129,6 +129,7 @@ def gzExtract(gz_file:str, file_name:str):
     with gzip.open(gz_file, 'rb') as f_in:
         with open(file_name, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+    os.remove(gz_file)
 
 def makeIdsFile(path:str):
     dic = {}

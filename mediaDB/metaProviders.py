@@ -56,9 +56,11 @@ class MetaProviders():
         return list_titles
 
     def mediaExistbyName(self, title: str):
+        if not isinstance(title, str):
+            raise ValueError("method mediaExistByName: title has to be string")
         results = self.__manipulator.find(title, self.__media_type)
         list_titles = self.__get_titles_info(results)
-        tuple_result = process.extractOne(title, list_titles)
+        tuple_result = process.extractOne(title, [key for key in list_titles])
         if tuple_result is None:
             return False
         else :

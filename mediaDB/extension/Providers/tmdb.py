@@ -3,6 +3,7 @@ from json import load
 from os.path import isfile
 from datetime import datetime
 from thefuzz import process
+from copy import deepcopy
 # relative imports
 from mediaDB.common import *
 from mediaDB.mediaTypes import *
@@ -19,7 +20,7 @@ class TMDB_manipulator(ProviderCommon):
     IDS_MOVIE: dict
     IDS_TV: dict
 
-    # VARIABLES
+    # CONST
     __DATE = datetime.now().strftime("%m_%d_%Y")
     NAME = "TMDB"
     CONFIG_EXEMPLE_URL = "https://raw.githubusercontent.com/Strange500/mediaDB/main/exemples/TMDB"
@@ -29,10 +30,12 @@ class TMDB_manipulator(ProviderCommon):
     GENRE_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "genre_movie.json")
     GENRE_TV_FILE = os.path.join(CACHE_DIRECTORY, "genre_tv.json")
     TMDB_EXPORT_URL = "https://files.tmdb.org/p/exports/"
-    IDS_TV_FILE = os.path.join(CACHE_DIRECTORY, "tv_ids.json")
+    IDS_TV_FILE = os.path.join(CACHE_DIRECTORY, f"tv_ids_{__DATE}.json")
     IDS_TV_URL = f"{TMDB_EXPORT_URL}tv_series_ids_{__DATE}.json.gz"
-    IDS_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "movies_ids.json")
+    IDS_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, f"movies_ids_{__DATE}.json")
     IDS_MOVIES_URL = f"{TMDB_EXPORT_URL}movie_ids_{__DATE}.json.gz"
+    CACHE_DB_TV_FILE = os.path.join(CACHE_DIRECTORY, "DB_tv.json")
+    CACHE_DB_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "DB_movie.json")
     media_types = [1, 3]
 
     # CREATE NEEDED FILES & DIRECTORY
@@ -42,6 +45,12 @@ class TMDB_manipulator(ProviderCommon):
             # Download TMDB config file if not created
     if not isfile(SETTING_FILE) and not wget(CONFIG_EXEMPLE_URL, SETTING_FILE):
         raise ProviderConfigError
+    if not isfile(CACHE_DB_TV_FILE) :
+        with open(CACHE_DB_TV_FILE, "w", encoding="utf-8") as f:
+            dump({}, f, indent=5)
+    if not isfile(CACHE_DB_MOVIE_FILE) :
+        with open(CACHE_DB_MOVIE_FILE, "w", encoding="utf-8") as f:
+            dump({}, f, indent=5)
     
     # SETTING UP 
     CONFIG = parseConfig(SETTING_FILE)
@@ -52,12 +61,15 @@ class TMDB_manipulator(ProviderCommon):
     tmdb.REQUESTS_TIMEOUT = int(CONFIG["timeout"][0])
 
         # Download tmdb ids file
-    movie_list = tmdb.Genres().movie_list()
-    tv_list = tmdb.Genres().tv_list()
-    with open(GENRE_MOVIE_FILE, "w") as f:
-        save_json(f, movie_list)
-    with open(GENRE_TV_FILE, "w") as f:
-        save_json(f, tv_list)
+    if not isfile(GENRE_MOVIE_FILE):
+        movie_list = tmdb.Genres().movie_list()
+        with open(GENRE_MOVIE_FILE, "w") as f:
+            save_json(f, movie_list)
+    if not isfile(GENRE_TV_FILE):
+        tv_list = tmdb.Genres().tv_list()
+        with open(GENRE_TV_FILE, "w") as f:
+            save_json(f, tv_list)
+
     with open(GENRE_MOVIE_FILE, "r") as f:
         MOVIE_GENRE_IDS = load(f)
     with open(GENRE_TV_FILE, "r") as f:
@@ -79,6 +91,11 @@ class TMDB_manipulator(ProviderCommon):
     with open(IDS_TV_FILE, "r", encoding="utf-8") as f:
         IDS_TV = load(f)
 
+        # loads DB
+    with open(CACHE_DB_TV_FILE, "r", encoding="utf-8") as f:
+        CACHE_DB_TV = load(f)
+    with open(CACHE_DB_MOVIE_FILE, "r", encoding="utf-8") as f:
+        CACHE_DB_MOVIE = load(f)
 
     def genreExist(self, id:int, media_type:int):
         m, id_list = mediaType(media_type), None
@@ -101,6 +118,23 @@ class TMDB_manipulator(ProviderCommon):
     def getTitleMovie(self, id: int) -> str:
         if self.movieIdExist(id):
             return self.IDS_MOVIE[f"{id}"]
+        
+    def __store_tmdb_tv_info(self, info_tmdb: dict):
+        if (self.tvIdExist(info_tmdb["id"])):
+            info = deepcopy(info_tmdb)
+            id = info.pop("id")
+            self.CACHE_DB_TV[f"{id}"] = info
+            with open(self.CACHE_DB_TV_FILE, "w", encoding="utf-8") as f:
+                dump(self.CACHE_DB_TV, f, indent=5)
+
+    def __store_tmdb_movie_info(self, info_tmdb: dict):
+        if (self.tvIdExist(info_tmdb["id"])):
+            info = deepcopy(info_tmdb)
+            id = info.pop("id")
+            self.CACHE_DB_MOVIE[f"{id}"] = info
+            with open(self.CACHE_DB_MOVIE_FILE, "w", encoding="utf-8") as f:
+                dump(self.CACHE_DB_MOVIE, f, indent=5)
+
         
     def findIdTV(self, title: str) -> int:
         titles = {self.IDS_TV[id]: id for id in self.IDS_TV}
@@ -176,7 +210,10 @@ class TMDB_manipulator(ProviderCommon):
         return info_tmdb
     
     def __make_alter_titles(self, info_tmdb: dict) -> dict:
-        alter = tmdb.tv.TV(info_tmdb['id']).alternative_titles()["results"]
+        if info_tmdb.get("media_type") == 3:
+            alter = tmdb.tv.TV(info_tmdb['id']).alternative_titles()["results"]
+        elif info_tmdb.get("media_type") == 1:
+            alter = tmdb.movies.Movies(info_tmdb['id']).alternative_titles()["titles"]
         result = []
         for dic in alter:
             title = dic["title"]
@@ -240,6 +277,7 @@ class TMDB_manipulator(ProviderCommon):
             raise MalformedTMDBInfo
         
     def __formatTV_info(self, info:dict) -> dict:
+        info["media_type"] = 3
         info = self.__make_seasons(info)
         info = self.__make_alter_titles(info)
         info = self.__make_genres(info)
@@ -248,7 +286,6 @@ class TMDB_manipulator(ProviderCommon):
         info = self.__make_title(info)
         info = self.__make_tmdb_id(info)
         info = self.__make_next_episode_to_air(info)
-        info["media_type"] = 3
         if info.get("status", None) is None:
             info["status"] = "Ended"
         return info
@@ -273,6 +310,7 @@ class TMDB_manipulator(ProviderCommon):
         if not self.tvIdExist(id):
             raise IdDoesNotExist(f"method getTVInfo: {id} does not exist")
         info = tmdb.tv.TV(id).info(append_to_response="seasons,translations")
+        self.__store_tmdb_tv_info(info)
         info = self.__formatTV_info(info)
         return info
     
@@ -280,6 +318,7 @@ class TMDB_manipulator(ProviderCommon):
         if not self.movieIdExist(id):
             raise IdDoesNotExist(f"method getMovieInfo: {id} does not exist")
         info = tmdb.movies.Movies(id).info(append_to_response="translations")
+        self.__store_tmdb_movie_info(info)
         info = self.__formatMovieInfo(info)
         return info
 
