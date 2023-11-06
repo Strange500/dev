@@ -1,2 +1,2 @@
 # mediaDB
-https://www.codefactor.io/Content/badges/APlus.svg
+<a href="https://www.codefactor.io/repository/github/strange500/mediadb"><img src="https://www.codefactor.io/repository/github/strange500/mediadb/badge" alt="CodeFactor" /></a>
