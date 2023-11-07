@@ -28,6 +28,7 @@ class MetaProviders():
             "number_of_season": int,
             "media_type": int,
             "original_language": string,
+            "date_info": string,
             "seasons": {
                 "1": {
                     "air_date": string,

@@ -154,6 +154,6 @@ def is_latin(chaine):
     motif = re.compile(r'[^a-zA-ZÀ-ÿ\s!@#$%^&*()_\-+=\[\]{};:\'",.<>/?\\|`~]+')
     return not motif.search(chaine)
 
-if __name__ == '__main__':
-    from pprint import pprint
-    p#print(parseConfig("test.pyc"))
+def get_date(format: str|None = "%m_%d_%Y"):
+    return datetime.now().strftime(format)
+

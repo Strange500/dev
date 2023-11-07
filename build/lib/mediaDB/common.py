@@ -148,6 +148,3 @@ def wget(url: str, save_path: str) -> bool:
         return False
     return True
 
-if __name__ == '__main__':
-    from pprint import pprint
-    p#print(parseConfig("test.pyc"))

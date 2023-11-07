@@ -12,7 +12,7 @@ class ProviderCommon():
     os.makedirs(SETTING_DIRECTORY, exist_ok=True)
     os.makedirs(VAR_DIRECTORY, exist_ok=True)
 
-    def make_result(tmdb_id:int, media_type:int, release_date:str, last_air_date:str | None = None, adult: bool | None = None, genres: list[int] | None = None, in_production: bool | None = False, last_episode_to_air: dict | None = None, title: str | None = None, other_titles:list[str] | None = None, next_episode_to_air: dict | None = None, number_of_episodes:int | None = None, number_of_season: int | None = None, original_language:str | None = None, seasons: dict | None = None, status: str | None = None, **kwargs) -> dict:
+    def make_result(tmdb_id:int, media_type:int, release_date:str, last_air_date:str | None = None, adult: bool | None = None, genres: list[int] | None = None, in_production: bool | None = False, last_episode_to_air: dict | None = None, title: str | None = None, other_titles:list[str] | None = None, next_episode_to_air: dict | None = None, number_of_episodes:int | None = None, number_of_season: int | None = None, original_language:str | None = None, seasons: dict | None = None, status: str | None = None, info_date: str|None= None, **kwargs) -> dict:
         """
         Normalize data, in order to be used by metaProvider.py
         {
@@ -95,6 +95,7 @@ class ProviderCommon():
             "original_language": original_language,
             "seasons": seasons,
             "status": status,
+            "info_date": info_date
 
         }
         return result

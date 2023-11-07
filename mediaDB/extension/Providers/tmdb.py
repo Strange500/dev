@@ -19,6 +19,8 @@ class TMDB_manipulator(ProviderCommon):
     GENRE_TV_FILE:str
     IDS_MOVIE: dict
     IDS_TV: dict
+    CACHE_DB_TV: dict
+    CACHE_DB_MOVIE: dict
 
     # CONST
     __DATE = datetime.now().strftime("%m_%d_%Y")
@@ -125,16 +127,73 @@ class TMDB_manipulator(ProviderCommon):
             id = info.pop("id")
             self.CACHE_DB_TV[f"{id}"] = info
             with open(self.CACHE_DB_TV_FILE, "w", encoding="utf-8") as f:
-                dump(self.CACHE_DB_TV, f, indent=5)
+                dump(self.CACHE_DB_TV, f, indent=5, sort_keys=True)
 
     def __store_tmdb_movie_info(self, info_tmdb: dict):
-        if (self.tvIdExist(info_tmdb["id"])):
+        if (self.movieIdExist(info_tmdb["id"])):
             info = deepcopy(info_tmdb)
             id = info.pop("id")
             self.CACHE_DB_MOVIE[f"{id}"] = info
             with open(self.CACHE_DB_MOVIE_FILE, "w", encoding="utf-8") as f:
-                dump(self.CACHE_DB_MOVIE, f, indent=5)
+                dump(self.CACHE_DB_MOVIE, f, indent=5, sort_keys=True)
 
+    # def __get_season_changes(self, changes_season: list[int], date:str)->dict:
+    #     from pprint import pprint
+    #     result = []
+    #     for season_id in list(set(changes_season)):
+    #         changes = tmdb.TV_Changes(season_id).season(start_date=date)["changes"]
+    #         changes = [change["items"] for change in changes if change.get("items") is not None]
+    #         changes = [change for change in changes if type(change) == list and len(change) > 0 and change[0]["value"].get("episode_id", None) is not None]
+    #         if len(changes) > 0:
+    #             changes = [item for change in changes for item in change]
+    #         result = [*result, *[change["value"]["episode_id"] for change in changes if change.get("value", None) is not None and change["value"].get("episode_id") is not None ]]
+            
+    #     return 
+
+
+    # def __get__changes_tv(self, info: dict) -> list[int] | None:
+    #     date = info["info_date"]
+    #     date = "2022-11-02"
+    #     id = info["id"]
+    #     result = []
+    #     changes = tmdb.TV_Changes(id).series(start_date=date)["changes"]
+    #     changes = [change["items"] for change in changes if change.get("items") is not None]
+    #     changes = [change for change in changes if type(change) == list and len(change) > 0 and change[0]["value"].get("season_id", None) is not None]
+    #     if len(changes) > 0:
+    #         changes = [item for change in changes for item in change]
+    #     for change in changes:
+    #         value = change.get("value", None)
+    #         if value is None:
+    #             continue
+    #         if dict(value).get("season_id", None) is not None:
+    #             s_id = dict(value).get("season_id", None) 
+    #             result.append(s_id)
+    #     return self.__get_season_changes(result, date)
+
+    def __get_info_from_cache_tv(self, id:int) -> dict|None:
+        info = self.CACHE_DB_TV.get(f"{id}", None)
+        if info is not None:
+            date = datetime.strptime(info["info_date"], "%Y-%m-%d")
+            if datetime.strptime(get_date(format="%Y-%m-%d"), "%Y-%m-%d")> date:
+                info["id"] = id
+                return self.__getTVInfo(id)
+            else:
+                return info
+        else:
+            return info
+        
+    def __get_info_from_cache_movie(self, id:int) -> dict|None:
+        info = self.CACHE_DB_MOVIE.get(f"{id}", None)
+        if info is not None:
+            date = datetime.strptime(info["info_date"], "%Y-%m-%d")
+            if datetime.strptime(get_date(format="%Y-%m-%d"), "%Y-%m-%d")> date:                
+                return self.__getMovieInfo(id)
+            else:
+                info["id"] = id
+                info = self.__formatMovieInfo(info)
+                return info
+        else:
+            return info
         
     def findIdTV(self, title: str) -> int:
         titles = {self.IDS_TV[id]: id for id in self.IDS_TV}
@@ -234,7 +293,9 @@ class TMDB_manipulator(ProviderCommon):
         return tmdb_info
     
     def __make_genres(self, tmdb_info: dict) -> dict:
-        tmdb_info["genres"] = [genre_data["id"] for genre_data in tmdb_info["genres"]]
+        if len([type(item) for item in tmdb_info["genres"] if type(item) == int]) > 0:
+            return tmdb_info
+        tmdb_info["genres"] = [genre_data["id"] for genre_data in tmdb_info["genres"] if genre_data.get("id", None) is not None]
         return tmdb_info
     
     def __make_tmdb_id(self, tmdb_info: dict) -> dict:
@@ -305,19 +366,28 @@ class TMDB_manipulator(ProviderCommon):
             info["status"] = "Ended"
         return info
 
-    
+    def __get_tmdb_info_tv(self, id, append_to_response:str | None = "seasons,translations") -> dict:
+        return tmdb.tv.TV(id).info(append_to_response=append_to_response)
+                                   
+    def __get_tmdb_info_movie(self, id, append_to_response:str | None = "translations") -> dict:
+        return tmdb.movies.Movies(id).info(append_to_response=append_to_response)
+                                   
     def __getTVInfo(self, id: int) -> dict:
         if not self.tvIdExist(id):
             raise IdDoesNotExist(f"method getTVInfo: {id} does not exist")
-        info = tmdb.tv.TV(id).info(append_to_response="seasons,translations")
-        self.__store_tmdb_tv_info(info)
+        info = self.__get_tmdb_info_tv(id)
+        info["info_date"] = get_date(format="%Y-%m-%d")
+        info["id"] = id
         info = self.__formatTV_info(info)
+        self.__store_tmdb_tv_info(info)
         return info
     
     def __getMovieInfo(self, id: int) -> dict:
         if not self.movieIdExist(id):
             raise IdDoesNotExist(f"method getMovieInfo: {id} does not exist")
-        info = tmdb.movies.Movies(id).info(append_to_response="translations")
+        info = self.__get_tmdb_info_movie(id)
+        info["info_date"] = get_date(format="%Y-%m-%d")
+        info["id"] = id
         self.__store_tmdb_movie_info(info)
         info = self.__formatMovieInfo(info)
         return info
@@ -337,10 +407,18 @@ class TMDB_manipulator(ProviderCommon):
         result = []
         if media_type == 1:
             for ids in self.findMovieByTitle(title=title):
-                result.append(ProviderCommon.make_result(**self.__getMovieInfo(ids)))
+                info = self.__get_info_from_cache_movie(ids)
+                if info is None:
+                    result.append(ProviderCommon.make_result(**self.__getMovieInfo(ids)))
+                else:
+                    result.append(ProviderCommon.make_result(**info))                  
         elif media_type == 3:
             for ids in self.findTVByTitle(title=title):
-                result.append(ProviderCommon.make_result(**self.__getTVInfo(ids)))
+                info = self.__get_info_from_cache_tv(ids)
+                if info is None:
+                    result.append(ProviderCommon.make_result(**self.__getTVInfo(ids)))
+                else:
+                    result.append(ProviderCommon.make_result(**info))
 
         return result
         
