@@ -175,7 +175,6 @@ class TMDB_manipulator(ProviderCommon):
         if info is not None:
             date = datetime.strptime(info["info_date"], "%Y-%m-%d")
             if datetime.strptime(get_date(format="%Y-%m-%d"), "%Y-%m-%d")> date:
-                info["id"] = id
                 return self.__getTVInfo(id)
             else:
                 return info
@@ -189,8 +188,6 @@ class TMDB_manipulator(ProviderCommon):
             if datetime.strptime(get_date(format="%Y-%m-%d"), "%Y-%m-%d")> date:                
                 return self.__getMovieInfo(id)
             else:
-                info["id"] = id
-                info = self.__formatMovieInfo(info)
                 return info
         else:
             return info
@@ -268,11 +265,26 @@ class TMDB_manipulator(ProviderCommon):
         info_tmdb["seasons"] = new_dic["seasons"]
         return info_tmdb
     
+    def __alter_title_translations(self, info_tmdb: dict) -> dict:
+        result = []
+        tr = info_tmdb.get("translations", None)
+        if tr is not None:
+            try:
+                tr = [trans["data"]["title"] for trans in tr["translations"] if trans["data"]["title"] != '' and is_latin(trans["data"]["title"]) ]
+            except KeyError:
+                tr = [trans["data"]["name"] for trans in tr["translations"] if trans["data"]["name"] != '' and is_latin(trans["data"]["name"]) ]
+            for title in tr:
+                result.append({"title": title})
+        return result
+            
+    
     def __make_alter_titles(self, info_tmdb: dict) -> dict:
         if info_tmdb.get("media_type") == 3:
             alter = tmdb.tv.TV(info_tmdb['id']).alternative_titles()["results"]
+            alter = [*alter, *self.__alter_title_translations(info_tmdb)]
         elif info_tmdb.get("media_type") == 1:
             alter = tmdb.movies.Movies(info_tmdb['id']).alternative_titles()["titles"]
+            alter = [*alter, *self.__alter_title_translations(info_tmdb)]
         result = []
         for dic in alter:
             title = dic["title"]
@@ -354,6 +366,7 @@ class TMDB_manipulator(ProviderCommon):
     def __formatMovieInfo(self, info: dict) -> dict:
         info["media_type"] = 1
         info = self.__make_alter_titles(info)
+        print(info.get("other_titles", None))
         info = self.__make_genres(info)
         info = self.__make_last_episode_to_air(info)
         info = self.__make_release_date(info)
@@ -361,7 +374,6 @@ class TMDB_manipulator(ProviderCommon):
         info = self.__make_tmdb_id(info)
         info = self.__make_next_episode_to_air(info)
         info["seasons"] = None
-        info["media_type"] = 1
         if info.get("status", None) is None:
             info["status"] = "Ended"
         return info
@@ -388,8 +400,8 @@ class TMDB_manipulator(ProviderCommon):
         info = self.__get_tmdb_info_movie(id)
         info["info_date"] = get_date(format="%Y-%m-%d")
         info["id"] = id
-        self.__store_tmdb_movie_info(info)
         info = self.__formatMovieInfo(info)
+        self.__store_tmdb_movie_info(info)
         return info
 
     def get(self, id:int, media_type:int) -> dict:
