@@ -300,8 +300,6 @@ class TMDB_manipulator(ProviderCommon):
     def __make_release_date(self, tmdb_info: dict) -> dict:
         if tmdb_info.get("release_date", None) is None:
             tmdb_info["release_date"] = tmdb_info["first_air_date"]
-        else :
-            tmdb_info["release_date"] = "2004-08-12"
         return tmdb_info
     
     def __make_genres(self, tmdb_info: dict) -> dict:
