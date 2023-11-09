@@ -1,5 +1,5 @@
 from mediaDB.API import app
-from mediaDB.common import forbidden_car, is_video, is_connected,key_value_in_dic_key, make_response_api, next_id, parseConfig, is_date_valid, save_json
+from mediaDB.common import alive_bar, forbidden_car, is_video, is_connected,key_value_in_dic_key, make_response_api, next_id, parseConfig, is_date_valid, save_json
 from mediaDB.Database import Database
 from mediaDB.exceptions import MediaNotFoundERROR, MediaTypeNotSupported, MediaTypeDoesNotExist
 from mediaDB.flaresolver import FlareSolverrProxy

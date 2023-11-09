@@ -71,7 +71,7 @@ class MetaProviders():
         else:
             return False
         
-    def mediaInfobyName(self, title: str):
+    def __mediaInfobyName(self, title: str):
         results = self.__manipulator.find(title, self.__media_type)
         list_titles = self.__get_titles_info(results)
         tuple_result = process.extractOne(title, [key for key in list_titles])
@@ -93,7 +93,7 @@ class MetaProviders():
             return False
 
     def episodeExistbyName(self, title : str, season: int, episode: int) -> bool:
-        if self.mediaExistbyName(title) and self.seasonExist(title, season=season):
+        if self.mediaExistbyName(title) and self.seasonExistbyName(title, season=season):
             data = self.getMediaData(title=title)
             s = dict(data["seasons"]).get(f"{season}", None)
             if s is None:
@@ -113,7 +113,7 @@ class MetaProviders():
         else:
             return False
 
-    def episodeExistbyName(self, id : int, season: int, episode: int) -> bool:
+    def episodeExistbyId(self, id : int, season: int, episode: int) -> bool:
         if self.mediaExistbyId(id) and self.seasonExistbyId(id, season=season):
             data = self.getMediaData(tmdb_id=id)
             s = dict(data["seasons"]).get(f"{season}", None)
@@ -124,20 +124,25 @@ class MetaProviders():
 
 
     def getMediaData(self, title:str|None = None, tmdb_id:int | None = None) -> dict:
+        
         if (title is None and tmdb_id is None) or (title is not None and tmdb_id is not None):
             raise ValueError("methods getMediaData: you must use title or (xor) tmdb_id")
         if title is not None:
-            if not isinstance(title, str):
-                raise ValueError("methods getMediaData: title has to be instance of str")
-            if not self.mediaExistbyName(title):
-                return None
-            return self.mediaInfobyName(title)
+            with alive_bar( title=f"Getting data for '{title}'", **bar_setting) as bar:
+                if not isinstance(title, str):
+                    raise ValueError("methods getMediaData: title has to be instance of str")
+                if not self.mediaExistbyName(title):
+                    return None
+                r= self.__mediaInfobyName(title)
+                return r
         elif tmdb_id is not None:
-            if not isinstance(tmdb_id, int):
-                raise ValueError("methods getMediaData: tmdb_id has to be instance of int")
-            if not self.mediaExistbyId(tmdb_id):
-                return None
-            return self.__manipulator.get(tmdb_id, self.__media_type)
+            with alive_bar(title=f"Getting data for id: {tmdb_id}", **bar_setting) as bar:
+                if not isinstance(tmdb_id, int):
+                    raise ValueError("methods getMediaData: tmdb_id has to be instance of int")
+                if not self.mediaExistbyId(tmdb_id):
+                    return None
+                r = self.__manipulator.get(tmdb_id, self.__media_type)
+                return r
         
     def getSeasonInfo(self, season: int, title: str | None = None, tmdb_id: int | None = None) -> dict:
         if (title is None and tmdb_id is None) or (title is not None and tmdb_id is not None):
@@ -157,8 +162,8 @@ class MetaProviders():
         elif tmdb_id is not None:
             if not isinstance(tmdb_id, int):
                 raise ValueError("methods getMediaData: tmdb_id has to be instance of int")
-            if not self.seasonExistbyId(tmdb_id):
+            if not self.seasonExistbyId(tmdb_id, season):
                 return None
-            return self.__manipulator(id, self.__media_type)["seasons"][f"{season}"]
+            return self.__manipulator.get(tmdb_id, self.__media_type)["seasons"][f"{season}"]
         
         

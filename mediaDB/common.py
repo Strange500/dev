@@ -8,12 +8,14 @@ import shutil
 from copy import deepcopy
 import requests
 import re
+import sys
 from json import dump, load, loads, JSONDecodeError
 from datetime import datetime
-
+from alive_progress import alive_bar
 # local imports
 from mediaDB.flaresolver import FlareSolverrProxy
 
+bar_setting = {"bar" :"classic2", "spinner":"pulse"}
 
 def forbidden_car(name):
     """
@@ -157,3 +159,19 @@ def is_latin(chaine):
 def get_date(format: str|None = "%m_%d_%Y"):
     return datetime.now().strftime(format)
 
+def itemsAreType(items: list, tp) -> bool:
+    for item in items:
+        if not isinstance(item, tp):
+            return False
+    return True
+
+
+def get_current_time():
+    current_time = datetime.now().strftime("%H:%M")
+    return current_time
+
+def update_progress_bar(msg:str, progress:int):
+    bar_length = 20
+    block = int(round(bar_length * progress))
+    progress_str = f"\r[{block * '#' + (bar_length - block) * '-'}] {msg}"
+    print(progress_str, end='', flush=True)

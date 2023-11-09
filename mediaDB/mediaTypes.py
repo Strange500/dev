@@ -15,7 +15,10 @@ class mediaType():
         MEDIA_TYPES = load(f)
 
     def __init__(self, id:int) -> None:
-        data = self.MEDIA_TYPES[f"{self.__id}"]
+        try:
+            data = self.MEDIA_TYPES[f"{id}"]
+        except KeyError:
+            raise MediaTypeDoesNotExist
         self.__name = data["name"]
         self.__id = id
         self.have_season = data["have_season"]

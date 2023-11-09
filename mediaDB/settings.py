@@ -2,11 +2,12 @@ import os
 import socket
 import appdirs
 import validators
+import sys
 
 
-from mediaDB.common import wget
+from mediaDB.common import wget, get_date, get_current_time
 
-DEBUG_MODE_ENABLE = False
+DEBUG_MODE_ENABLE = True
 hostname = socket.gethostname()
 IP = socket.gethostbyname(hostname)
 APP_NAME = "mediaDB"
@@ -37,3 +38,20 @@ for couple in [(GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL), (TMDB_MOVIE_BAN_
     else:
         with open(file, "w") as f:
             f.write("")
+
+def log(to_log: str, info: bool|None=False, warning:bool|None=False, error:bool|None=False, debug:bool|None=False) -> None:
+    sentence = f"[{get_date()}] [{get_current_time}] - "
+    if debug and DEBUG_MODE_ENABLE:
+        sentence += f"DEBUG : {to_log}"
+        sys.stdout.write(sentence)
+        print(sentence)
+    elif warning:
+        sentence += f"WARNING : {to_log}"
+        sys.stderr.write(sentence)
+    elif error:
+        sentence += f"ERROR : {to_log}"
+        sys.stderr.write(sentence)
+    elif info:
+        sentence += f"{to_log}"
+        sys.stdout.write(sentence)
+    return 

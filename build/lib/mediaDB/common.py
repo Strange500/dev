@@ -148,3 +148,8 @@ def wget(url: str, save_path: str) -> bool:
         return False
     return True
 
+def itemsAreType(items: list, tp) -> bool:
+    for item in items:
+        if not isinstance(item, tp):
+            return False
+    return True
