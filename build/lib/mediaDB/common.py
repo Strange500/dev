@@ -3,40 +3,19 @@ import socket
 import appdirs
 from urllib.parse import urlparse
 import validators
+import gzip
+import shutil
 from copy import deepcopy
 import requests
-from json import dump
+import re
+import sys
+from json import dump, load, loads, JSONDecodeError
 from datetime import datetime
-
+from alive_progress import alive_bar
 # local imports
 from mediaDB.flaresolver import FlareSolverrProxy
 
-
-DEBUG_MODE_ENABLE = False
-hostname = socket.gethostname()
-IP = socket.gethostbyname(hostname)
-APP_NAME = "Media-Manager"
-APP_AUTHOR = "Strange500"
-
-VAR_DIR = appdirs.user_cache_dir(appname=APP_NAME, appauthor=APP_AUTHOR)
-CONF_DIR = appdirs.user_config_dir(appname=APP_NAME, appauthor=APP_AUTHOR)
-SETTINGS_DIR = os.path.join(CONF_DIR, "setting")
-
-
-GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL = os.path.join(SETTINGS_DIR, "COMMON"),""
-TMDB_MOVIE_BAN_FILE = os.path.join(SETTINGS_DIR, "banned_movies.list"), ""
-TMDB_TV_BAN_FILE = os.path.join(SETTINGS_DIR, "banned_tv.list")
-INDEXERS_FILE, __INDEXERS_URL = os.path.join(SETTINGS_DIR,"Indexers.json"), ""
-METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL = os.path.join(SETTINGS_DIR, "MetaProviders.json"), ""
-
-os.makedirs(VAR_DIR, exist_ok=True)
-os.makedirs(CONF_DIR, exist_ok=True)
-os.makedirs(SETTINGS_DIR, exist_ok=True)
-
-for file, url in [(GENERAL_SETTINGS_FILE, __GENERAL_SETTINGS_URL), (TMDB_MOVIE_BAN_FILE, ""), (TMDB_TV_BAN_FILE, ""),
-                  (INDEXERS_FILE, __INDEXERS_URL), (METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL)]:
-    if not os.path.isfile(file) and validators.url(url):
-        wget(file)
+bar_setting = {"bar" :"classic2", "spinner":"pulse"}
 
 def forbidden_car(name):
     """
@@ -148,8 +127,51 @@ def wget(url: str, save_path: str) -> bool:
         return False
     return True
 
+def gzExtract(gz_file:str, file_name:str):
+    with gzip.open(gz_file, 'rb') as f_in:
+        with open(file_name, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.remove(gz_file)
+
+def makeIdsFile(path:str):
+    dic = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for lines in f:
+            try:
+                js = loads(lines)
+            except JSONDecodeError:
+                continue
+            if js.get("id", None) is None:
+                continue
+            if js.get("original_title", None) is None and js.get("original_name", None) is None:
+                continue
+            try:
+                dic[js["id"]] = js["original_title"]
+            except KeyError:
+                dic[js["id"]] = js["original_name"]
+    with open(path, "w") as f:
+        dump(dic, f, indent=5)
+
+def is_latin(chaine):
+    motif = re.compile(r'[^a-zA-ZÀ-ÿ\s!@#$%^&*()_\-+=\[\]{};:\'",.<>/?\\|`~]+')
+    return not motif.search(chaine)
+
+def get_date(format: str|None = "%m_%d_%Y"):
+    return datetime.now().strftime(format)
+
 def itemsAreType(items: list, tp) -> bool:
     for item in items:
         if not isinstance(item, tp):
             return False
     return True
+
+
+def get_current_time():
+    current_time = datetime.now().strftime("%H:%M")
+    return current_time
+
+def update_progress_bar(msg:str, progress:int):
+    bar_length = 20
+    block = int(round(bar_length * progress))
+    progress_str = f"\r[{block * '#' + (bar_length - block) * '-'}] {msg}"
+    print(progress_str, end='', flush=True)

@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.3.4'
+VERSION = '0.0.4'
 DESCRIPTION = 'Database to manage media'
 LONG_DESCRIPTION = "Ensure your media are here, no double, detect missing media, and can accept any metadata providers, sources"
 

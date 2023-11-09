@@ -13,7 +13,6 @@ class mediaType():
         raise MediaTypesFilesDoesNotExist
     with open(MEDIA_TYPES_FILE, "r") as f:
         MEDIA_TYPES = load(f)
-
     def __init__(self, id:int) -> None:
         try:
             data = self.MEDIA_TYPES[f"{id}"]

@@ -45,7 +45,7 @@ class MetaProviders():
         self.__name = name
         self.__manipulator = provider_manipulator()
         self.__media_types = provider_manipulator.media_types
-        if media_type not in self.__media_types:
+        if not media_type in self.__media_types:
             raise MediaTypeNotSupported
         self.__media_type = media_type
 

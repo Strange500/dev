@@ -10,8 +10,6 @@ from mediaDB.mediaTypes import *
 from mediaDB.extension.Providers.common import ProviderCommon
 from mediaDB.settings import *
 from about_time import about_time
-
-
 class TMDB_manipulator(ProviderCommon):
     NAME:str
     SETTING_FILE: str
@@ -24,7 +22,6 @@ class TMDB_manipulator(ProviderCommon):
     CACHE_DB_TV: dict
     CACHE_DB_MOVIE: dict
     with alive_bar(9, manual=True, title='Initializing tmdb provider', **bar_setting) as bar:
-
         # CONST
         __DATE = datetime.now().strftime("%m_%d_%Y")
         NAME = "TMDB"
@@ -447,5 +444,4 @@ class TMDB_manipulator(ProviderCommon):
     
         
         
-PROVIDERS_LIST["tmdb"] = TMDB_manipulator
 

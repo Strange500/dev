@@ -24,7 +24,6 @@ TMDB_TV_BAN_FILE = os.path.join(SETTINGS_DIR, "banned_tv.list")
 INDEXERS_FILE, __INDEXERS_URL = os.path.join(SETTINGS_DIR,"Indexers.json"), ""
 METADONNEE_PROVIDERS_FILE, __METADONNEE_PROVIDERS_URL = os.path.join(SETTINGS_DIR, "MetaProviders.json"), ""
 
-PROVIDERS_LIST = {}
 os.makedirs(VAR_DIR, exist_ok=True)
 os.makedirs(CONF_DIR, exist_ok=True)
 os.makedirs(SETTINGS_DIR, exist_ok=True)

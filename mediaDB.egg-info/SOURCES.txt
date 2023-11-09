@@ -1,3 +1,4 @@
+README.md
 setup.py
 mediaDB/API.py
 mediaDB/Database.py
@@ -8,11 +9,12 @@ mediaDB/flaresolver.py
 mediaDB/indexer.py
 mediaDB/mediaTypes.py
 mediaDB/metaProviders.py
+mediaDB/settings.py
 mediaDB.egg-info/PKG-INFO
 mediaDB.egg-info/SOURCES.txt
 mediaDB.egg-info/dependency_links.txt
 mediaDB.egg-info/top_level.txt
 mediaDB/extension/__init__.py
-mediaDB/extension/indexers/__init__.py
-mediaDB/extension/indexers/common.py
-mediaDB/extension/indexers/tmdb.py
+mediaDB/extension/Providers/__init__.py
+mediaDB/extension/Providers/common.py
+mediaDB/extension/Providers/tmdb.py
