@@ -175,3 +175,6 @@ def update_progress_bar(msg:str, progress:int):
     block = int(round(bar_length * progress))
     progress_str = f"\r[{block * '#' + (bar_length - block) * '-'}] {msg}"
     print(progress_str, end='', flush=True)
+
+def canConvertInt(item):
+    return (isinstance(item, str) and item.isnumeric()) or isinstance(item, int)
