@@ -1,6 +1,6 @@
 from mediaDB.common import *
 from mediaDB.exceptions import *
-
+from mediaDB.settings import *
 class indexer():
 
     def __init__(self, name : str, indexer_manipulator: object) -> None:

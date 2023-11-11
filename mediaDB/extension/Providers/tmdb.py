@@ -2,7 +2,7 @@ import tmdbsimple as tmdb
 from json import load
 from os.path import isfile
 from datetime import datetime
-from thefuzz import process
+from thefuzz import process, fuzz
 from copy import deepcopy
 # relative imports
 from mediaDB.common import *
@@ -213,9 +213,11 @@ class TMDB_manipulator(ProviderCommon):
     
     def findIdMovie(self, title: str) -> int:
         titles = {self.IDS_MOVIE[id]: id for id in self.IDS_MOVIE}
-        best, score = process.extractOne(title, [*titles])
-        if score > 90:
-            return int(titles[best])
+        r = process.extractOne(title, [*titles])
+        if r is not None:
+            best, score = r
+            if score > 90:
+                return int(titles[best])
         else:
             p = tmdb.Search()
             results_stat = p.movie(query=title)
@@ -286,6 +288,7 @@ class TMDB_manipulator(ProviderCommon):
             
     
     def __make_alter_titles(self, info_tmdb: dict) -> dict:
+        alter = []
         if info_tmdb.get("media_type") == 3:
             alter = tmdb.tv.TV(info_tmdb['id']).alternative_titles()["results"]
             alter = [*alter, *self.__alter_title_translations(info_tmdb)]
@@ -422,7 +425,7 @@ class TMDB_manipulator(ProviderCommon):
         if media_type == 3:
             return ProviderCommon.make_result(**self.__getTVInfo(id))
         
-    def find(self, title:int, media_type:int) -> dict:
+    def find(self, title:int, media_type:int) -> list:
         if not isinstance(title, str):
             raise ValueError("method get: tile must be str")
         result = []
@@ -442,6 +445,7 @@ class TMDB_manipulator(ProviderCommon):
                     result.append(ProviderCommon.make_result(**info))
 
         return result
+    
         
 
     

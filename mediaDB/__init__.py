@@ -6,7 +6,7 @@ from mediaDB.flaresolver import FlareSolverrProxy
 from mediaDB.indexer import indexer
 from mediaDB.mediaTypes import mediaType
 from mediaDB.metaProviders import MetaProviders
-from mediaDB.extension import Providers
+from mediaDB.extension import Providers, Indexers, Parsers
 from mediaDB.settings import DEBUG_MODE_ENABLE, hostname, IP, APP_AUTHOR, APP_NAME, VAR_DIR, CONF_DIR, SETTINGS_DIR, GENERAL_SETTINGS_FILE, TMDB_MOVIE_BAN_FILE, TMDB_TV_BAN_FILE, INDEXERS_FILE, METADONNEE_PROVIDERS_FILE
-
+from mediaDB.test import main
 

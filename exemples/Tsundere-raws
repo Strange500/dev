@@ -1,1 +1,0 @@
-{"pattern": "^(?:\\[(?P<source>.+?)\\]\\s*)?(?P<title>.+?)([\\._ ]*| - )S(?P<season>\\d{1,2})E(?P<episode>\\d{1,4})"}

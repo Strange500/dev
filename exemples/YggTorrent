@@ -1,0 +1,17 @@
+{
+     "active": true,
+     "pass_key": null,
+     "timeout": 10,
+     "cloudflared": true,
+     "domain": null,
+     "rss_active": false,
+     "rss_movie": null,
+     "rss_tv": null,
+     "search_engine_active": true,
+     "show_episode_search_engine_url": null,
+     "show_batch_search_engine_url": null,
+     "movie_search_engine_url": null,
+     "anime_episode_search_engine_url": null,
+     "anime_batch_search_engine_url": null,
+     "anime_movie_search_engine_url": null
+}

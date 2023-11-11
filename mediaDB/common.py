@@ -178,3 +178,8 @@ def update_progress_bar(msg:str, progress:int):
 
 def canConvertInt(item):
     return (isinstance(item, str) and item.isnumeric()) or isinstance(item, int)
+
+def replaceDots(string:str):
+    return string.replace(".", " ")
+def replaceUnderscore(string:str):
+    return string.replace("_", " ")
