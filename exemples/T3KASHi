@@ -1,0 +1,11 @@
+{
+     "patterns": {
+          "episode": [
+               "^(?P<title>.+?)[\\. _]S(?P<season>\\d{1,2})E(?P<episode>\\d{1,4})"
+          ],
+          "batch": [
+               "^(?P<title>.+?)[\\. _]S(?P<season>\\d{1,2})"
+          ],
+          "movie": []
+     }
+}
