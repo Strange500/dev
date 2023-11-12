@@ -1,6 +1,11 @@
+from typing import Dict
+
+
 from mediaDB.common import *
 from mediaDB.settings import *
-
+dict_pattern_type = Dict[str, list[str]] |None
+source_type = Dict[str, dict_pattern_type|str]|None
+sources_type = Dict[str, source_type|None]|None
 class ParserCommon():
 
     result = {
