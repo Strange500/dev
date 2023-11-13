@@ -15,6 +15,10 @@ mediaDB.egg-info/SOURCES.txt
 mediaDB.egg-info/dependency_links.txt
 mediaDB.egg-info/top_level.txt
 mediaDB/extension/__init__.py
+mediaDB/extension/Indexers/Yggtorrent.py
+mediaDB/extension/Indexers/__init__.py
+mediaDB/extension/Indexers/common.py
+mediaDB/extension/Indexers/nyaa.py
 mediaDB/extension/Providers/__init__.py
 mediaDB/extension/Providers/common.py
 mediaDB/extension/Providers/tmdb.py

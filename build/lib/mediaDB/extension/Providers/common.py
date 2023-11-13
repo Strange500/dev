@@ -5,8 +5,8 @@ from mediaDB.mediaTypes import mediaType
 class ProviderCommon():
 
     # VARIABLES
-    SETTING_DIRECTORY = os.path.join(CONF_DIR, "Indexers")
-    VAR_DIRECTORY = os.path.join(VAR_DIR, "Indexers")
+    SETTING_DIRECTORY = os.path.join(CONF_DIR, "Providers")
+    VAR_DIRECTORY = os.path.join(VAR_DIR, "Providers")
     PROXY = FlareSolverrProxy
 
     # CREATING FILES & DIRECTORIES

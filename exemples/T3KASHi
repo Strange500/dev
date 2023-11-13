@@ -1,0 +1,12 @@
+{
+     "patterns": {
+          "episode": [
+               "^(?P<title>.+?)[\\. _]S(?P<season>\\d{1,2})E(?P<episode>\\d{1,4})"
+          ],
+          "batch": [
+               "^(?P<title>.+?)[\\. _]S(?P<season>\\d{1,2})(?!(\\d{1,2})?E\\d{1,4})",
+               "(?i)^(?P<title>.*?)\\.((S\\d{1,2}E\\d{1,4})|(S\\d{1,2})|(MULTI|SUBFRENCH|CUSTOM|UNCENSORED|REMASTERED))"
+          ],
+          "movie": []
+     }
+}
