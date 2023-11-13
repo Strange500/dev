@@ -15,6 +15,7 @@ from alive_progress import alive_bar
 # local imports
 from mediaDB.flaresolver import FlareSolverrProxy
 
+bar_setting:dict
 bar_setting = {"bar" :"classic2", "spinner":"pulse"}
 
 def forbidden_car(name):

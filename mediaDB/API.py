@@ -60,7 +60,7 @@ def getTVSeasonInfo():
     title = request.form.get("title")
     season = request.form.get("season")
     media_type = 3
-    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))\
+    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))
             and canConvertInt(season)):
         abort(400)
     if PROVIDERS_LIST.get(provider) is None:
@@ -80,7 +80,7 @@ def TVSeasonExist():
     title = request.form.get("title")
     season = request.form.get("season")
     media_type = 3
-    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))\
+    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))
             and canConvertInt(season)):
         abort(400)
     if PROVIDERS_LIST.get(provider) is None:
@@ -101,7 +101,7 @@ def TVEpisodeExist():
     season = request.form.get("season")
     episode = request.form.get("episode")
     media_type = 3
-    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))\
+    if not (isinstance(provider, str) and (canConvertInt(id) or isinstance(title, str))
             and canConvertInt(season) and canConvertInt(episode)):
         abort(400)
     if PROVIDERS_LIST.get(provider) is None:
