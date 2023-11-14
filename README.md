@@ -21,5 +21,5 @@
 Install `mediaDB` using pip:
 
 ```bash
-pip install mediadb
+pip install mediaDB
 ```
