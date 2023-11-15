@@ -1,6 +1,7 @@
 from mediaDB.common import *
 from mediaDB.exceptions import *
 from mediaDB.settings import *
+from mediaDB.extension.Indexers.Yggtorrent import Yggtorrent_manipulator
 class indexer():
 
     def __init__(self, name : str, indexer_manipulator: object) -> None:

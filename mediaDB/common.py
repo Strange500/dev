@@ -9,6 +9,7 @@ from copy import deepcopy
 import requests
 import re
 import sys
+import feedparser
 from json import dump, load, loads, JSONDecodeError
 from datetime import datetime
 from alive_progress import alive_bar
@@ -184,3 +185,4 @@ def replaceDots(string:str):
     return string.replace(".", " ")
 def replaceUnderscore(string:str):
     return string.replace("_", " ")
+
