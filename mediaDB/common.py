@@ -80,7 +80,7 @@ def next_id(dic: dict) -> int:
             max_id = int(key)
     return max_id + 1
 
-def parseConfig(file_path) -> dict:
+def parseConfig(file_path) -> dict|None:
         """bonjour"""
         try:
             config = {}
@@ -159,7 +159,7 @@ def is_latin(chaine):
     return not motif.search(chaine)
 
 def get_date(format: str|None = "%m_%d_%Y"):
-    return datetime.now().strftime(format)
+    return datetime.now().strftime(str(format))
 
 def itemsAreType(items: list, tp) -> bool:
     for item in items:
@@ -186,3 +186,12 @@ def replaceDots(string:str):
 def replaceUnderscore(string:str):
     return string.replace("_", " ")
 
+def delete_empty_dictionnaries(dic: dict)->dict:
+    temp = {i:dic[i] for i in dic if dic[i] != {}}
+    return temp
+
+def remove_non_ascii(chaine):
+    chaine_encodee = chaine.encode('ascii', 'ignore')
+    chaine_decodee = chaine_encodee.decode('ascii')
+    chaine_decodee = re.sub(r'\\u[0-9A-Fa-f]+', '', chaine_decodee)
+    return chaine_decodee

@@ -13,5 +13,8 @@
      "movie_search_engine_url": null,
      "anime_episode_search_engine_url": null,
      "anime_batch_search_engine_url": null,
-     "anime_movie_search_engine_url": null
+     "anime_movie_search_engine_url": null,
+     "wanted_nfo_specification": ["format", "codec id", "duration", "width", "height", "language", "resolution", "hauteur", "largeur", "duree"],
+     "wanted_nfo_title": ["text", "video", "audio", "mkv"],
+     "nbSecBetweenReq": 1
 }
