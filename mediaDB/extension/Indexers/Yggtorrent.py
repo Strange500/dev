@@ -72,7 +72,7 @@ class Yggtorrent_manipulator():
         rss_tv = None
         wanted_nfo_specification = None
         wanted_nfo_title = None
-        nbSecBetweenReq = None
+        nbSecBetweenReq = 1
         category = None
         ep_option = None
         limit_ep = None
@@ -112,10 +112,7 @@ class Yggtorrent_manipulator():
                 qualities = CONFIG["qualities"]
 
 
-        if cloudflared and domain is not None:
-            PROXY = FlareSolverrProxy(domain)
-        else:
-            PROXY = None
+        
 
         with open(CACHE_DB_TV_FILE, "r", encoding="utf-8") as f:
             CACHE_DB_TV = load(f)
@@ -123,6 +120,11 @@ class Yggtorrent_manipulator():
             CACHE_DB_TV_BATCH = load(f)
         with open(CACHE_DB_MOVIE_FILE, "r", encoding="utf-8") as f:
             CACHE_DB_MOVIE = load(f)
+
+        if cloudflared and domain is not None:
+           PROXY = FlareSolverrProxy(domain)
+        else:
+            PROXY = None
 
         def __get_dl_link(self, torrent_id:int):
             dl_link = f"{self.domain}/rss/download?id={torrent_id}&passkey={self.PASS_KEY}"
@@ -160,20 +162,24 @@ class Yggtorrent_manipulator():
             return result
         
         def __store_results_tv(self, results: Dict[str, Dict[str, int]]) -> None:
-            if isinstance(results, dict):
-                self.CACHE_DB_TV = {**self.CACHE_DB_TV , **results}
-                with open(self.CACHE_DB_TV_FILE) as f:
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_TV"):
+                self.CACHE_DB_TV = {**self.CACHE_DB_TV , **formated_results} # type: ignore
+                with open(self.CACHE_DB_TV_FILE, "w") as f:
                     save_json(f, self.CACHE_DB_TV)
+
         def __store_results_tv_batch(self, results: Dict[str, Dict[str, int]]) -> None:
-            if isinstance(results, dict):
-                self.CACHE_DB_TV_BATCH = {**self.CACHE_DB_TV_BATCH , **results}
-                with open(self.CACHE_DB_TV_BATCH_FILE) as f:
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_TV_BATCH"):
+                self.CACHE_DB_TV_BATCH = {**self.CACHE_DB_TV_BATCH , **formated_results} # type: ignore
+                with open(self.CACHE_DB_TV_BATCH_FILE, "w") as f:
                     save_json(f, self.CACHE_DB_TV_BATCH)
 
         def __store_results_movie(self, results: Dict[str, Dict[str, int]]) -> None:
-            if isinstance(results, dict):
-                self.CACHE_DB_MOVIE = {**self.CACHE_DB_MOVIE , **results}
-                with open(self.CACHE_DB_MOVIE_FILE) as f:
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_MOVIE"):
+                self.CACHE_DB_MOVIE = {**self.CACHE_DB_MOVIE , **formated_results} # type: ignore
+                with open(self.CACHE_DB_MOVIE_FILE, "w") as f:
                     save_json(f, self.CACHE_DB_MOVIE)
 
         def __parse_page(self, url:str) -> tuple[dict | None, int | None] | None:
@@ -306,22 +312,28 @@ class Yggtorrent_manipulator():
                     return wanted_ori
             return False
         
-        def get_results(self, url: str, title: str): # on en est la 
+            
+        
+        def __get_results(self, url: str) -> Dict[str, Dict[str, int]] | None: 
             results = {}
-            title = title.replace(" ", "+")
-            url = url.replace("< search >", title)
-            item, n_tot = self.__parse_page(url)
-            if item is None:
+            response = self.__parse_page(url)
+            if response is None:
+                return None
+            item, n_tot = response
+            if item is None or n_tot is None:
                 return None
             results = {**results, **item}
-            time.sleep(1)
-            url = self.__get_next_page_url(url, n_tot)
-            while url is not None:
-                item, temp = self.parse_page(url)
+            time.sleep(self.nbSecBetweenReq)
+            n_url = self.__get_next_page_url(url, n_tot)
+            while n_url is not None:
+                response = self.__parse_page(n_url)
+                if response is None:
+                    return None
+                item, temp = response
                 if item is not None:
                     results = {**results, **item}
                 time.sleep(1)
-                url = self.get_next_page_url(url, n_tot)
+                n_url = self.__get_next_page_url(n_url, n_tot)
             return results
         
         # def get_ep(self, titles:list[str], season: int, episode: int, is_show=False, is_anime=False):
@@ -337,7 +349,7 @@ class Yggtorrent_manipulator():
         #         results = {**results, **self.__}
 
 
-        def make_urls(self, media_type:int, name:str, list_ep:list[int]|str="all", list_season:list[int]|str="all", quality:str|None="all", language:str|str="all", uploader:str="", description:str="", file:str="") -> list[str]|None:
+        def __make_urls(self, media_type:int, name:str, list_ep:list[int]|str="all", list_season:list[int]|str="all", quality:str|None="all", language:str|str="all", uploader:str="", description:str="", file:str="") -> list[str]|None:
             """make url from search engine"""
             url = f"{self.domain}/engine/search?name={name.replace(' ', '+')}&description={description.replace(' ', '+')}&file={file.replace(' ', '+')}&uploader={uploader}&"
             category = ""
@@ -373,7 +385,7 @@ class Yggtorrent_manipulator():
                 category = cat["id"]
                 subcategories = [cat["sub_categories"][i] for i in cat["sub_categories"] if i in ["animation", "film"]]
 
-            if self.language_option is not None  and self.languages is not None and language != "all" and language in self.languages:  
+            if self.language_option is not None and self.languages is not None and language != "all" and language in self.languages:  
                 url += self.language_option + f"{self.languages[language]}" + "&"
             if self.quality_option is not None and self.qualities is not None and quality != "all" and quality in self.qualities:
                 url += self.quality_option + f"{self.qualities[quality]}" + "&"
@@ -381,23 +393,57 @@ class Yggtorrent_manipulator():
             return [f"{url}category={category}&sub_category={i}&do=search" for i in subcategories]
             
             
-
+        def get_ep(self, titles: list[str], season: int, episode: int, tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+            results = {}
+            if tmdb_id is not None and tmdb_id in self.CACHE_DB_TV:
+                info = self.CACHE_DB_TV[tmdb_id]
+                if info.get("season", {}).get(str(episode), None) is not None: # type: ignore
+                    return info["season"][str(episode)] # type: ignore
+            for title in titles:
+                urls = self.__make_urls(3, title, list_ep=[episode], list_season=[season])
+                if urls is None:
+                    return None
+                for url in urls:
+                    response = self.__get_results(url)
+                    if response is not None:
+                        results.update(response)
+            self.__store_results_tv(results)
+            return results
+        
+        def get_movie(self, titles: list[str], tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+            results = {}
+            if tmdb_id is not None and tmdb_id in self.CACHE_DB_MOVIE:
+                return self.CACHE_DB_MOVIE[tmdb_id] # type: ignore
+            for title in titles:
+                urls = self.__make_urls(1, title)
+                if urls is None:
+                    return None
+                for url in urls:
+                    response = self.__get_results(url)
+                    if response is not None:
+                        results.update(response)
+            self.__store_results_movie(results)
+            return results
+    
+        def get_batch(self, titles: list[str], season: int, tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+            results = {}
+            if tmdb_id is not None and tmdb_id in self.CACHE_DB_TV_BATCH:
+                info = self.CACHE_DB_TV_BATCH[tmdb_id]
+                if info.get("season", {}).get(str(season), None) is not None: # type: ignore
+                    return info["season"][str(season)] # type: ignore
+            for title in titles:
+                urls = self.__make_urls(3, title, list_season=[season])
+                if urls is None:
+                    return None
+                for url in urls:
+                    response = self.__get_results(url)
+                    if response is not None:
+                        results.update(response)
+            self.__store_results_tv_batch(results)
+            return results
 
         
-        def fed(self):
-            from pprint import pprint
-            # feed = self.__get_feed('https://www3.yggtorrent.wtf/rss?action=generate&type=subcat&id=2179&passkey=1Jv4VqOP6LpdNJGv2WcWKQ8sHLKMDbM2')
-            # result = self.__get_feed_info(feed)
-            # pprint(result)
-            print(self.make_urls(3, "my dress up darling",  list_season=[1], uploader=""))
-
-Yggtorrent_manipulator().fed()
-## reste stocker et normaliser le resultat ! on ne normalise pas le stockage 
-                                        ## ! car les link peuvent changer
-## reste a scrap les search engine
-##    - faire fonction de dl (on normalise a cas ou il y est des choses specifique pour dl ex: cloudflared)
-##    - scrap ep puis nfo  
-
+       
 
 
 
