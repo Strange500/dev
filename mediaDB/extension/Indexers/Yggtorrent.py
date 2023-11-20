@@ -34,6 +34,7 @@ class Yggtorrent_manipulator():
         CACHE_DB_MOVIE:Dict[str, Dict[str, int]]
         CACHE_DB_TV_FILE:str
         CACHE_DB_TV:Dict[str, Dict[str, int]]
+        SEARCH_PATTERN = "< search >"
     # CONST
         NAME = "YggTorrent"
         CONFIG_EXEMPLE_URL = "https://raw.githubusercontent.com/Strange500/mediaDB/main/exemples/YggTorrent"
@@ -69,15 +70,19 @@ class Yggtorrent_manipulator():
         domain = None
         rss_movie = None
         rss_tv = None
-        show_episode_search_engine_url = None
-        show_batch_search_engine_url = None
-        movie_search_engine_url = None
-        anime_episode_search_engine_url = None
-        anime_batch_search_engine_url = None
-        anime_movie_search_engine_url = None
         wanted_nfo_specification = None
         wanted_nfo_title = None
         nbSecBetweenReq = None
+        category = None
+        ep_option = None
+        limit_ep = None
+        season_option = None
+        limit_season = None
+        language_option = None
+        languages = None
+        quality_option = None
+        qualities = None
+
 
         # SETTING UP 
         if not isfile(SETTING_FILE) and not wget(CONFIG_EXEMPLE_URL, SETTING_FILE):
@@ -96,13 +101,17 @@ class Yggtorrent_manipulator():
                 rss_movie = CONFIG["rss_movie"]
                 rss_tv = CONFIG["rss_tv"]
             if CONFIG["search_engine_active"]:
-                show_episode_search_engine_url = CONFIG["show_episode_search_engine_url"]
-                show_batch_search_engine_url = CONFIG["show_batch_search_engine_url"]
-                movie_search_engine_url = CONFIG["movie_search_engine_url"]
-                anime_episode_search_engine_url = CONFIG["anime_episode_search_engine_url"]
-                anime_batch_search_engine_url = CONFIG["anime_batch_search_engine_url"]
-                anime_movie_search_engine_url = CONFIG["anime_movie_search_engine_url"]
-        
+                category = CONFIG["category"]
+                ep_option = CONFIG["ep_option"]
+                limit_ep = CONFIG["limit_ep"]
+                season_option = CONFIG["season_option"]
+                limit_season = CONFIG["limit_season"]
+                language_option = CONFIG["language_option"]
+                languages = CONFIG["languages"]
+                quality_option = CONFIG["quality_option"]
+                qualities = CONFIG["qualities"]
+
+
         if cloudflared and domain is not None:
             PROXY = FlareSolverrProxy(domain)
         else:
@@ -315,23 +324,72 @@ class Yggtorrent_manipulator():
                 url = self.get_next_page_url(url, n_tot)
             return results
         
-        def get_ep(self, titles:list[str], season: int, episode: int, is_show=False, is_anime=False):
-            if is_show and self.show_episode_search_engine_url is not None:
-                list_source = [self.show_episode_search_engine_url]
-            elif is_anime and self.anime_episode_search_engine_url is not None:
-                list_source = [self.anime_episode_search_engine_url]
-            else:
-                list_source = [i for i in [self.anime_episode_search_engine_url, self.show_episode_search_engine_url] if i is not None]
+        # def get_ep(self, titles:list[str], season: int, episode: int, is_show=False, is_anime=False):
+        #     if is_show and self.show_episode_search_engine_url is not None:
+        #         list_source = [self.show_episode_search_engine_url]
+        #     elif is_anime and self.anime_episode_search_engine_url is not None:
+        #         list_source = [self.anime_episode_search_engine_url]
+        #     else:
+        #         list_source = [i for i in [self.anime_episode_search_engine_url, self.show_episode_search_engine_url] if i is not None]
             
-            results =  dict()
-            for url in list_source:
-                results = {**results, **self.__ge}
+        #     results =  dict()
+        #     for url in list_source:
+        #         results = {**results, **self.__}
+
+
+        def make_urls(self, media_type:int, name:str, list_ep:list[int]|str="all", list_season:list[int]|str="all", quality:str|None="all", language:str|str="all", uploader:str="", description:str="", file:str="") -> list[str]|None:
+            """make url from search engine"""
+            url = f"{self.domain}/engine/search?name={name.replace(' ', '+')}&description={description.replace(' ', '+')}&file={file.replace(' ', '+')}&uploader={uploader}&"
+            category = ""
+            subcategories = []
+            if self.category is None:
+                return
+            if media_type == 3:
+                cat = self.category["film&video"]
+                category = cat["id"]
+                subcategories = [cat["sub_categories"][i] for i in cat["sub_categories"] if i in ["animation", "animation_serie", "serie_tv"]]
+                all_ep = False
+                all_season = False
+                if list_ep == "all" and self.limit_ep is not None:
+                    list_ep = [1]
+                    all_ep = True
+                if list_season == "all" and self.limit_season is not None:
+                        list_season = [1]
+                        all_season = True
+                if self.ep_option is not None :
+                    if not all_ep:
+                        for ep in list(list_ep):
+                            url += self.ep_option + f"{(int(ep)+1)}" + "&"
+                    else:
+                        url+= self.ep_option + f"1" + "&"
+                if self.season_option is not None :
+                    if not all_season:
+                        for season in list(list_season):
+                            url += self.season_option + f"{(int(season)+3)}" + "&"
+                    else:
+                        url+= self.season_option + f"1" + "&"
+            elif media_type == 1:
+                cat = self.category["film&video"]
+                category = cat["id"]
+                subcategories = [cat["sub_categories"][i] for i in cat["sub_categories"] if i in ["animation", "film"]]
+
+            if self.language_option is not None  and self.languages is not None and language != "all" and language in self.languages:  
+                url += self.language_option + f"{self.languages[language]}" + "&"
+            if self.quality_option is not None and self.qualities is not None and quality != "all" and quality in self.qualities:
+                url += self.quality_option + f"{self.qualities[quality]}" + "&"
+            
+            return [f"{url}category={category}&sub_category={i}&do=search" for i in subcategories]
+            
+            
+
+
         
         def fed(self):
             from pprint import pprint
-            feed = self.__get_feed('https://www3.yggtorrent.wtf/rss?action=generate&type=subcat&id=2179&passkey=1Jv4VqOP6LpdNJGv2WcWKQ8sHLKMDbM2')
-            result = self.__get_feed_info(feed)
-            pprint(result)
+            # feed = self.__get_feed('https://www3.yggtorrent.wtf/rss?action=generate&type=subcat&id=2179&passkey=1Jv4VqOP6LpdNJGv2WcWKQ8sHLKMDbM2')
+            # result = self.__get_feed_info(feed)
+            # pprint(result)
+            print(self.make_urls(3, "my dress up darling",  list_season=[1], uploader=""))
 
 Yggtorrent_manipulator().fed()
 ## reste stocker et normaliser le resultat ! on ne normalise pas le stockage 
