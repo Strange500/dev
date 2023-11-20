@@ -8,13 +8,112 @@
      "rss_movie": null,
      "rss_tv": null,
      "search_engine_active": true,
-     "show_episode_search_engine_url": null,
-     "show_batch_search_engine_url": null,
-     "movie_search_engine_url": null,
-     "anime_episode_search_engine_url": null,
-     "anime_batch_search_engine_url": null,
-     "anime_movie_search_engine_url": null,
      "wanted_nfo_specification": ["format", "codec id", "duration", "width", "height", "language", "resolution", "hauteur", "largeur", "duree"],
      "wanted_nfo_title": ["text", "video", "audio", "mkv"],
-     "nbSecBetweenReq": 1
+     "nbSecBetweenReq": 1,
+     "category": {
+          "film&video": {
+               "id": 2145,
+               "sub_categories": {
+                    "animation" : 2178,
+                    "animation_serie": 2179,
+                    "concert": 2180,
+                    "documentaire": 2181,
+                    "emission_tv": 2182,
+                    "film": 2183,
+                    "serie_tv": 2184,
+                    "spectacle": 2185,
+                    "sport": 2186,
+                    "video_clips": 2187
+               }
+          },
+          "audio": {
+               "id": 2139,
+               "sub_categories": {
+                    "karaoke": 2147,
+                    "musique": 2148,
+                    "sample": 2149,
+                    "podcast": 2150
+               }
+          },
+          "application": {
+               "id": 2144,
+               "sub_categories": {
+                    "linux": 2171,
+                    "macos": 2172,
+                    "smarphone": 2174,
+                    "windows": 2173,
+                    "tablette": 2175,
+                    "autre": 2177,
+                    "formation": 2176
+               }
+          },
+          "ebook": {
+               "id": 2140,
+               "sub_categories": {
+                    "audio_book": 2151,
+                    "bd": 2152,
+                    "comics": 2153,
+                    "livre": 2154,
+                    "manga": 2155,
+                    "presse": 2156
+               }
+          },
+          "jeux": {
+               "id": 2142,
+               "sub_categories": {
+                    "linux": 2159,
+                    "macos": 2160,
+                    "nintendo": 2163,
+                    "microsoft": 2162,
+                    "smarphone": 2165,
+                    "sony": 2164,
+                    "tablette": 2166,
+                    "autre": 2167
+               }
+          }
+
+     },
+     "ep_option": "option_episode[]=",
+     "limit_ep": 60,
+     "season_option": "option_saison[]=",
+     "limit_season": 30,
+     "language_option": "option_langue%3Amultiple[]=",
+     "languages": {
+          "english": 1,
+          "truefrench": 2,
+          "mute": 3,
+          "multi_fr_include": 4,
+          "multi_qb_include": 5,
+          "quebecois": 6,
+          "vfstfr": 7,
+          "vostfr": 8
+     },
+     "quality_option": "option_qualite[]=",
+     "qualities": {
+          "bdrip": 1,
+          "bluray4k": 2,
+          "blurayfull":3,
+          "blurayremux":4,
+          "dvdr5": 5,
+          "dvdr9": 6,
+          "dvdrip": 7,
+          "hdrip1080": 8,
+          "hdrip4k": 9,
+          "hdrip720": 10,
+          "tvrip": 11,
+          "tvrip1080": 12,
+          "tvrip4k": 13,
+          "tvrip720": 14,
+          "vhsrip": 15,
+          "webdl": 16,
+          "webdl1080": 17,
+          "webdl4k": 18,
+          "webdl720": 19,
+          "webrip": 20,
+          "webrip1080": 21,
+          "webrip4k": 22,
+          "webrip720": 23
+
+     
 }
