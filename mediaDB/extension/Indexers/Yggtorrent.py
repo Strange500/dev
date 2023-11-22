@@ -42,7 +42,7 @@ class Yggtorrent_manipulator():
         VAR_DIRECTORY = os.path.join(IndexerCommon.VAR_DIRECTORY, NAME)
         CACHE_DIRECTORY = os.path.join(VAR_DIRECTORY, "cache")
         CACHE_DB_TV_FILE = os.path.join(CACHE_DIRECTORY, "DB_tv.json")
-        CACHE_DB_TV_BATCH_FILE = os.path.join(CACHE_DIRECTORY, "DB_tv.json")
+        CACHE_DB_TV_BATCH_FILE = os.path.join(CACHE_DIRECTORY, "DB_tv_batch.json")
         CACHE_DB_MOVIE_FILE = os.path.join(CACHE_DIRECTORY, "DB_movie.json")
         media_types = [1, 3]
 
@@ -162,21 +162,21 @@ class Yggtorrent_manipulator():
             return result
         
         def __store_results_tv(self, results: Dict[str, Dict[str, int]]) -> None:
-            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"]), "nfo": results[i]["nfo"]} for i in results}
             if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_TV"):
                 self.CACHE_DB_TV = {**self.CACHE_DB_TV , **formated_results} # type: ignore
                 with open(self.CACHE_DB_TV_FILE, "w") as f:
                     save_json(f, self.CACHE_DB_TV)
 
         def __store_results_tv_batch(self, results: Dict[str, Dict[str, int]]) -> None:
-            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"]), "nfo": results[i]["nfo"]} for i in results}
             if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_TV_BATCH"):
                 self.CACHE_DB_TV_BATCH = {**self.CACHE_DB_TV_BATCH , **formated_results} # type: ignore
                 with open(self.CACHE_DB_TV_BATCH_FILE, "w") as f:
                     save_json(f, self.CACHE_DB_TV_BATCH)
 
         def __store_results_movie(self, results: Dict[str, Dict[str, int]]) -> None:
-            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"])} for i in results}
+            formated_results = {results[i]["id"]: {"torrent_name": i, "seeders": int(results[i]["seeders"]), "nfo": results[i]["nfo"]} for i in results}
             if isinstance(formated_results, dict) and hasattr(self, "CACHE_DB_MOVIE"):
                 self.CACHE_DB_MOVIE = {**self.CACHE_DB_MOVIE , **formated_results} # type: ignore
                 with open(self.CACHE_DB_MOVIE_FILE, "w") as f:
@@ -264,7 +264,7 @@ class Yggtorrent_manipulator():
             if not validators.url(url):
                 return
             response = self.PROXY.get(f'{self.domain}/engine/get_nfo?torrent={id_torrent}')
-            content, result = self.__prepare_nfo(str(response)), {}
+            content, result = self.__prepare_nfo(str(response.content)), {}
             temp, title = {}, None
             for part in content:
                 key, value = self.__get_value_nfo(part)
@@ -334,6 +334,10 @@ class Yggtorrent_manipulator():
                     results = {**results, **item}
                 time.sleep(1)
                 n_url = self.__get_next_page_url(n_url, n_tot)
+            for i in results:
+                nfo = self.__get_nfo(results[i]["id"])
+                if nfo is not None:
+                    results[i]["nfo"] = nfo
             return results
         
         # def get_ep(self, titles:list[str], season: int, episode: int, is_show=False, is_anime=False):
@@ -393,27 +397,33 @@ class Yggtorrent_manipulator():
             return [f"{url}category={category}&sub_category={i}&do=search" for i in subcategories]
             
             
-        def get_ep(self, titles: list[str], season: int, episode: int, tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+        def get_ep(self, titles: list[str]|str, seasons: int|list[int], episodes: int|list[int], tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
             results = {}
-            if tmdb_id is not None and tmdb_id in self.CACHE_DB_TV:
-                info = self.CACHE_DB_TV[tmdb_id]
-                if info.get("season", {}).get(str(episode), None) is not None: # type: ignore
-                    return info["season"][str(episode)] # type: ignore
+            if isinstance(titles, str):
+                titles = [titles]
+            if isinstance(episodes, int):
+                episodes = [episodes]
+            if isinstance(seasons, int):
+                seasons = [seasons]
+            if len(episodes) < 1:
+                return None
             for title in titles:
-                urls = self.__make_urls(3, title, list_ep=[episode], list_season=[season])
+                print(title)
+                urls = self.__make_urls(3, title, list_ep=episodes, list_season=seasons)
+                print(urls , "\n")
                 if urls is None:
                     return None
                 for url in urls:
                     response = self.__get_results(url)
                     if response is not None:
                         results.update(response)
-            self.__store_results_tv(results)
+            self.__store_results_tv(results) ##### faire cache correctement
             return results
         
-        def get_movie(self, titles: list[str], tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+        def get_movie(self, titles: list[str]|str, tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
             results = {}
-            if tmdb_id is not None and tmdb_id in self.CACHE_DB_MOVIE:
-                return self.CACHE_DB_MOVIE[tmdb_id] # type: ignore
+            if isinstance(titles, str):
+                titles = [titles]
             for title in titles:
                 urls = self.__make_urls(1, title)
                 if urls is None:
@@ -425,14 +435,14 @@ class Yggtorrent_manipulator():
             self.__store_results_movie(results)
             return results
     
-        def get_batch(self, titles: list[str], season: int, tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
+        def get_batch(self, titles: list[str]|str, seasons: int|list[int], tmdb_id: int | None = None) -> Dict[str, Dict[str, int]] | None:
             results = {}
-            if tmdb_id is not None and tmdb_id in self.CACHE_DB_TV_BATCH:
-                info = self.CACHE_DB_TV_BATCH[tmdb_id]
-                if info.get("season", {}).get(str(season), None) is not None: # type: ignore
-                    return info["season"][str(season)] # type: ignore
+            if isinstance(titles, str):
+                titles = [titles]
+            if isinstance(seasons, int):
+                seasons = [seasons]
             for title in titles:
-                urls = self.__make_urls(3, title, list_season=[season])
+                urls = self.__make_urls(3, title, list_season=seasons)
                 if urls is None:
                     return None
                 for url in urls:
@@ -441,12 +451,24 @@ class Yggtorrent_manipulator():
                         results.update(response)
             self.__store_results_tv_batch(results)
             return results
-
+            
+                
         
-       
+        def download(self, torrent_id: int) -> bytes | None:
+            if self.PROXY is None:
+                return None
+            url = self.__get_dl_link(torrent_id)
+            response = self.PROXY.get(url)
+            if response.status_code != 200:
+                return None
+            return response.content
+        
+        def getTorrentNameAndIdTVEP(self) -> Dict[str, int]:
+            return {str(self.CACHE_DB_TV[i]["torrent_name"]): int(i) for i in self.CACHE_DB_TV}
+    
+        def getTorrentNameAndIdTVBatch(self) -> Dict[str, int]:
+            return {str(self.CACHE_DB_TV_BATCH[i]["torrent_name"]): int(i) for i in self.CACHE_DB_TV_BATCH}
+        
+        def getTorrentNameAndIdMovie(self) -> Dict[str, int]:
+            return {str(self.CACHE_DB_MOVIE[i]["torrent_name"]): int(i) for i in self.CACHE_DB_MOVIE}
 
-
-
-
-            
-            
