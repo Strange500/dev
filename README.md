@@ -2,7 +2,7 @@
 <a href="https://www.codefactor.io/repository/github/strange500/mediadb"><img src="https://www.codefactor.io/repository/github/strange500/mediadb/badge" alt="CodeFactor" /></a>
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-This repo is not ready for use, first beta will be on air in 2024
+This repo is not ready for use, try using sonarr or raddarr
 
 ## Description
 
